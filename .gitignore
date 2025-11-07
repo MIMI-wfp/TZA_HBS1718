@@ -48,5 +48,6 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
-# stata files:
+# data files:
 *.dta
+*.csv
