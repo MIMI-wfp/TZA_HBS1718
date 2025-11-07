@@ -361,7 +361,8 @@ ggplot(household_information, aes(x = adult_equiv, y = afe)) +
 
 # Keep only required variables: 
 household_information <- household_information |> 
-  dplyr::select(hhid, adm1, res, survey_wgt, year, month, afe)
+  dplyr::select(hhid, adm1, res, survey_wgt, year, month, afe) |>
+  distinct(hhid, .keep_all = TRUE)
 
 # Write CSV: 
 write_csv(household_information, "processed_data/tza_hbs1718_household_information.csv")
