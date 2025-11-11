@@ -22,7 +22,7 @@ rm(list= c("rq_packages", "installed_packages"))
 #-------------------------------------------------------------------------------
 
 # READ IN DATA: 
-household_information <- read_csv("processed_data/tza_hbs1718_household_information.csv")
+household_information <- read_csv("processed_data/tza_hbs1718_hh_information.csv")
 household_roster <- read_dta("raw_data/HBS 2017-18 _Final_Poverty+Individual_Data.dta")
 consumption_aggregates <- read_dta("raw_data/HBS_2017-18 Consumption Aggregate and Poverty Analysis Variables.dta")
 
@@ -131,7 +131,7 @@ household_information <- household_information |>
                 res_quintile, year, month, survey_wgt, afe, pc_expenditure)
 
 # Write: 
-write_csv(household_information, "processed_data/tza_hbs1718_household_information.csv")
+write_csv(household_information, "processed_data/tza_hbs1718_hh_information.csv")
 
 rm(list = ls())
 
