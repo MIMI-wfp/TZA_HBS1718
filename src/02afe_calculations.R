@@ -36,44 +36,6 @@ household_roster <- household_roster |>
     roster_id = TUS__id,
     adm1 = REGION,
     sex = S1_2,
-    age = calc_age,
-    survey_wgt = weight,
-    popweight,
-    res = LOC,
-    hh_size = hhsize,
-    adult_equiv = aeq
-  )
-
-# INSTALL AND LOAD PACKAGES:
-
-rq_packages <- c("readr", "tidyverse", "haven")
-
-installed_packages <- rq_packages %in% rownames(installed.packages())
-if (any(installed_packages == FALSE)) {
-  install.packages(rq_packages[!installed_packages])
-}
-
-lapply(rq_packages, require, character.only = T)
-
-rm(list= c("rq_packages", "installed_packages"))
-
-#-------------------------------------------------------------------------------
-
-# READ DATA: 
-
-household_roster <- read_dta("raw_data/HBS 2017-18 _Final_Poverty+Individual_Data.dta")
-consumption_aggregates <- read_dta("raw_data/HBS_2017-18 Consumption Aggregate and Poverty Analysis Variables.dta")
-
-#-------------------------------------------------------------------------------
-
-# SELECT REQUIRED VARIABLES:
-household_roster <- household_roster |> 
-  dplyr::select(
-    hhid = HHID,
-    interview__id,
-    roster_id = TUS__id,
-    adm1 = REGION,
-    sex = S1_2,
     month_birth = S1_3_1,
     year_birth = S1_3_2,
     age = calc_age,
@@ -365,7 +327,7 @@ household_information <- household_information |>
   distinct(hhid, .keep_all = TRUE)
 
 # Write CSV: 
-write_csv(household_information, "processed_data/tza_hbs1718_household_information.csv")
+write_csv(household_information, "processed_data/tza_hbs1718_hh_information.csv")
 
 # Clear environment:
 rm(list = ls())

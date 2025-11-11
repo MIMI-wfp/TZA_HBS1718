@@ -51,3 +51,7 @@ rsconnect/
 # data files:
 *.dta
 *.csv
+*.xlsx
+
+# Shapefiles folder: 
+shapefiles/
