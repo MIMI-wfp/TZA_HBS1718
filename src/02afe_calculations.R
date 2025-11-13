@@ -8,7 +8,7 @@
 
 # INSTALL AND LOAD PACKAGES:
 
-rq_packages <- c("readr", "tidyverse", "haven")
+rq_packages <- c("readr", "readxl", "tidyverse", "haven")
 
 installed_packages <- rq_packages %in% rownames(installed.packages())
 if (any(installed_packages == FALSE)) {

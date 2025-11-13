@@ -55,3 +55,8 @@ rsconnect/
 
 # Shapefiles folder: 
 shapefiles/
+
+# Figures: 
+figures/
+processed_data/foodgroup_histograms/
+processed_data/foodgroup_histograms_log/

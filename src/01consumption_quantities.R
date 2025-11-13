@@ -1,12 +1,20 @@
 # Authors: Uche Agu & Mo Osman
 
-# Load required packages
-pacman::p_load(tidyverse,
-               readxl,
-               haven)
+# INSTALL AND LOAD PACKAGES:
+
+rq_packages <- c("readr", "readxl", "tidyverse", "haven")
+
+installed_packages <- rq_packages %in% rownames(installed.packages())
+if (any(installed_packages == FALSE)) {
+  install.packages(rq_packages[!installed_packages])
+}
+
+lapply(rq_packages, require, character.only = T)
+
+rm(list= c("rq_packages", "installed_packages"))
 
 # Read in data and convert all quantities to grams based on the 'unit' code
-daily_food_cons <- read_dta("HD_B1.dta") %>%
+daily_food_cons <- read_dta("raw_data/HD_B1.dta") %>%
   select(interview__id, day, coicop4, coicop, unit, q) %>%
   rename(quantity=q) %>%
   mutate(quantity = case_when(
@@ -30,12 +38,12 @@ tzahbs1718_food_consumption <- daily_food_cons %>%
   rename(item_code = coicop)
 
 # Load prepared hh info data
-tza_hh_info <- read.csv("C:/Users/uchenna.agu/OneDrive - World Food Programme/Mohammed Aheed OSMAN's files - processed_data/tza_hbs1718_hh_information.csv") %>%
+tza_hh_info <- read.csv("processed_data/tza_hbs1718_hh_information.csv") %>%
   select(hhid, afe) %>%
   mutate(hhid=as.character(hhid))
 
 # Load HBS_2017_18_Final_Poverty_Individual_Data to extract interview__id and HHID
-df <- read_dta("HBS 2017-18 _Final_Poverty+Individual_Data.dta") %>%
+df <- read_dta("raw_data/HBS 2017-18 _Final_Poverty+Individual_Data.dta") %>%
   select(interview__id, HHID) %>%
   mutate(HHID = as.character(HHID)) %>%
   distinct_all()
@@ -93,4 +101,8 @@ tzahbs1718_food_consumption  <- tzahbs1718_food_consumption_gdafe  %>%
   select(iso3, survey, -interview__id, hhid, item_code, quantity_g, quantity_100g)
 
 # Save in required folder
-write.csv(tzahbs1718_food_consumption, file = "tzahbs1718_food_consumption.csv", row.names = FALSE)
+write.csv(tzahbs1718_food_consumption, file = "processed_data/tza_hbs1718_food_consumption.csv", row.names = FALSE)
+
+rm(list = ls())
+
+# END OF SCRIPT
