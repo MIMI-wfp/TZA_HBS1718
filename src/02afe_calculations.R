@@ -295,6 +295,8 @@ ggplot(household_information, aes(x = hh_size, y = afe)) +
   theme(plot.background = element_rect(fill = "white", color = NA),
         panel.background = element_rect(fill = "white", color = NA))
 
+# ggsave("figures/afe_vs_hhsize.png", width = 8, height = 6)
+
 # For smaller households, almost a 1:1 relationship between AFE and household size, 
 # which is to be expected. For larger households, the AFE tends to be lower than
 # household size, which is expected as larger households tend to have more children.
@@ -310,6 +312,8 @@ ggplot(household_information, aes(x = adult_equiv, y = afe)) +
   theme_minimal(base_family = "", base_size = 11) +
   theme(plot.background = element_rect(fill = "white", color = NA),
         panel.background = element_rect(fill = "white", color = NA))
+
+# ggsave("figures/afe_vs_adult_equiv.png", width = 8, height = 6)
 
 # Linear relationship between AFE and adult equivalent, as expected. However, 
 # AFE tends to be higher than adult equivalent, this is expected as the energy
