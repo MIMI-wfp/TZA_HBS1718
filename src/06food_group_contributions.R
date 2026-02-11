@@ -7,6 +7,7 @@ pacman::p_load(
   patchwork
 )
 
+# Load required data - hhinfo, consumption data, fct and food group categorization
 hhinfo <- read.csv("processed_data/tza_hbs1718_hh_information.csv") %>%
   select(hhid, afe)
 
@@ -200,5 +201,6 @@ ggsave("tza hbs1718 energy contributions.png",
        plot = final_plot,
        width = 9, height = 6, units = "in", dpi = 300,
        bg = "white")
+
 
 
