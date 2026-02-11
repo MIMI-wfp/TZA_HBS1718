@@ -1,4 +1,4 @@
-# Title: Tanzania HBS 2017-18 Energy Contributions
+# Title: Tanzania HBS 2017-18 Food Group Contributions
 # Author: Uchenna Agu
 ## ---- Packages ----
 pacman::p_load(
@@ -204,3 +204,4 @@ ggsave("tza hbs1718 energy contributions.png",
        plot = final_plot,
        width = 9, height = 6, units = "in", dpi = 300,
        bg = "white")
+
