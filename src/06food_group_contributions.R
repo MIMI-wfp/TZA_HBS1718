@@ -3,13 +3,9 @@
 ## ---- Packages ----
 pacman::p_load(
   tidyverse,
-  getPass,
-  RMySQL,
-  DBI,
   cowplot,
   patchwork
 )
-
 
 hhinfo <- read.csv("processed_data/tza_hbs1718_hh_information.csv") %>%
   select(hhid, afe)
@@ -204,4 +200,5 @@ ggsave("tza hbs1718 energy contributions.png",
        plot = final_plot,
        width = 9, height = 6, units = "in", dpi = 300,
        bg = "white")
+
 
