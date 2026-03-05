@@ -13,7 +13,7 @@
 
 # INSTALL AND LOAD PACKAGES:
 
-rq_packages <- c("readr", "tidyverse", "srvyr", "ggplot2")
+rq_packages <- c("readr", "tidyverse", "srvyr", "ggplot2", "ggthemes")
 
 installed_packages <- rq_packages %in% rownames(installed.packages())
 if (any(installed_packages == FALSE)) {
@@ -84,6 +84,8 @@ analysis_df.svy <- analysis_df |>
 
 #-------------------------------------------------------------------------------
 
+# NATIONAL ESTIMATES OF INADEQUATE MICRONUTRIENT INTAKE:
+
 # Calculate national estimates of inadequate micronutrient intake:
 national_estimates <- analysis_df.svy |>
   summarise(vita_inadequacy = survey_mean(vita_rae_mcg_inadequate, na.rm = T, vartype = NULL),
@@ -94,6 +96,10 @@ national_estimates <- analysis_df.svy |>
             ca_inadequacy = survey_mean(ca_mg_inadequate, na.rm = T, vartype = NULL)) |>
   pivot_longer(cols = everything(), names_to = "micronutrient", values_to = "estimate") |> 
   mutate(estimate = estimate * 100)
+
+#--------------------------------------------------------------------------------
+
+# ESTIMATES OF INADEQUATE MICRONUTRIENT INTAKE BY URBAN/RURAL RESIDENCE:
 
 # Calculate estimates of inadequate micronutrient intake by urban/rural residence:
 residence_estimates <- analysis_df.svy |>
@@ -106,6 +112,61 @@ residence_estimates <- analysis_df.svy |>
             ca_inadequacy = survey_mean(ca_mg_inadequate, na.rm = T, vartype = NULL)) |>
   pivot_longer(cols = -res, names_to = "micronutrient", values_to = "estimate") |> 
   mutate(estimate = estimate * 100)
+
+# Also stratified by wealth quintile:
+res_sep_estimates <- analysis_df.svy |>
+  group_by(res, res_quintile) |>
+  summarise(vita_inadequacy = survey_mean(vita_rae_mcg_inadequate, na.rm = T, vartype = NULL),
+            thia_inadequacy = survey_mean(thia_mg_inadequate, na.rm = T, vartype = NULL),
+            ribo_inadequacy = survey_mean(ribo_mg_inadequate, na.rm = T, vartype = NULL),
+            vitb12_inadequacy = survey_mean(vitb12_mcg_inadequate, na.rm = T, vartype = NULL),
+            zn_inadequacy = survey_mean(zn_mg_inadequate, na.rm = T, vartype = NULL),
+            ca_inadequacy = survey_mean(ca_mg_inadequate, na.rm = T, vartype = NULL)) |>
+  pivot_longer(cols = -c(res, res_quintile), names_to = "micronutrient", values_to = "estimate") |> 
+  mutate(estimate = estimate * 100) |> 
+  filter(!is.na(res_quintile))
+
+#--------------------------------------------------------------------------------
+
+# DATA VISUALISATION EXAMPLE - VITAMIN B12 INADEQUACY:
+vitb12_stratified <- res_sep_estimates |>
+  filter(micronutrient == "vitb12_inadequacy")
+
+# Prepare wide-format data for vitamin B12 (Urban vs Rural) by wealth quintile
+vitb12_df <- res_sep_estimates |>
+  filter(micronutrient == "vitb12_inadequacy", res %in% c("Urban", "Rural")) |>
+  mutate(res_quintile = case_when(
+    res_quintile == 1 ~ "1 - Poorest",
+    res_quintile == 5 ~ "5 - Wealthiest",
+    TRUE ~ as.character(res_quintile)
+  ),
+  res_quintile = factor(res_quintile, levels = c("1 - Poorest", "2", "3", "4", "5 - Wealthiest"))
+  ) |>
+  select(res, res_quintile, estimate) |>
+  pivot_wider(names_from = res, values_from = estimate) |>
+  tidyr::drop_na(Rural, Urban) |> 
+  mutate(diff = abs(Urban - Rural))
+
+# Dumbbell plot for vitamin B12: Urban vs Rural by wealth quintile
+p_vitB12_dumbbell <- ggplot(vitb12_df) +
+  geom_segment(aes(x = Rural, xend = Urban, y = res_quintile, yend = res_quintile),
+                        color = "gray80", size = 4.5, alpha = 0.7) +
+  geom_text(aes(label = paste("Δ", round(diff, 1), "%"), x = (Rural + Urban) / 2, y = res_quintile),
+            color = "#4a4e4d", fill = "white", family = "Segoe UI Semibold", size = 3) +
+  geom_point(aes(x = Rural, y = res_quintile, color = "Rural"), size = 4) +
+  geom_point(aes(x = Urban, y = res_quintile, color = "Urban"), size = 4) +
+  scale_color_manual(name = "Residence", values = c("Rural" = "#762a83", "Urban" = "#009688")) +
+  scale_x_continuous(limits = c(0, 100), expand = c(0, 0)) +
+  labs(x = "Percentage of households at risk of inadequate intake (%)", y = "Wealth quintile",
+                title = "Vitamin B12 - risk of inadequate intake",
+                caption = "Source: Tanzania Household Budget Survey (HBS) 2017-18") +
+  theme(panel.grid.minor = element_blank(),
+                 legend.position = "right") 
+
+p_vitB12_dumbbell
+#--------------------------------------------------------------------------------
+
+# ADM1 (REGION) LEVEL ESTIMATES OF INADEQUATE MICRONUTRIENT INTAKE:
 
 # Calculate estimates of inadequate micronutrient intake by adm1: 
 adm1_estimates <- analysis_df.svy |>
