@@ -136,6 +136,8 @@ PAL <- 1.76 # reference: table 5.1 FAO/WHO/UNU (2004)
 
 # CLEANING: 
 
+summary(household_roster$age)
+
 # There are some non-sensical entries for year_birth and month_birth:
 household_roster <- household_roster |> 
   mutate(year_birth = ifelse(year_birth > year, NA, year_birth))
