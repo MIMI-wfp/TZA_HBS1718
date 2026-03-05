@@ -29,13 +29,22 @@ daily_food_cons <- read_dta("raw_data/HD_B1.dta") %>%
     TRUE ~ quantity                    
   ))
 
-# Consumption quantities with detailed food item, remove bottled water, divide by 14
+# Load edible portions
+edible_portions <- read_excel("processed_data/COUNTRY_NCT_FD_domain_Tanzania_2017.xlsx", sheet = 5) %>%
+  select(`Food item code in Household Survey (item_cod)`, `Edible portion`) %>%
+  rename(item_code = `Food item code in Household Survey (item_cod)`, edible_portion = `Edible portion`)
+
+# Consumption quantities with edible portion adjustment
 tzahbs1718_food_consumption <- daily_food_cons %>%
   select(interview__id, coicop, quantity) %>%
-  filter(!(coicop %in% c(122101, 122102))) %>%  
+  filter(!(coicop %in% c(122101, 122102, 0))) %>%
   group_by(interview__id, coicop) %>%
-  summarise(quantity_g = sum(quantity, na.rm = TRUE)/14, .groups = "drop") %>%
-  rename(item_code = coicop)
+  summarise(quantity_g = sum(quantity, na.rm = TRUE) / 14, .groups = "drop") %>%
+  rename(item_code = coicop) %>%
+  left_join(edible_portions, by = "item_code") %>%
+  mutate(quantity_g = if_else(!is.na(edible_portion),
+                              quantity_g * edible_portion,
+                              quantity_g))
 
 # Load prepared hh info data
 tza_hh_info <- read.csv("processed_data/tza_hbs1718_hh_information.csv") %>%
