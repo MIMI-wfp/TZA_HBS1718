@@ -30,8 +30,6 @@ rm(list= c("rq_packages", "installed_packages"))
 base_ai <- read_csv("processed_data/tza_hbs1718_base_ai.csv")
 hh_information <- read_csv("processed_data/tza_hbs1718_hh_information.csv")
 
-
-
 #-------------------------------------------------------------------------------
 
 # GET ESTIMATED AVERAGE REQUIREMENT (EAR) VALUES:
@@ -171,12 +169,15 @@ p_vitB12_dumbbell
 # Calculate estimates of inadequate micronutrient intake by adm1: 
 adm1_estimates <- analysis_df.svy |>
   group_by(adm1) |>
-  summarise(vita_inadequacy = survey_mean(vita_rae_mcg_inadequate, na.rm = T, vartype = NULL),
-            thia_inadequacy = survey_mean(thia_mg_inadequate, na.rm = T, vartype = NULL),
-            ribo_inadequacy = survey_mean(ribo_mg_inadequate, na.rm = T, vartype = NULL),
-            vitb12_inadequacy = survey_mean(vitb12_mcg_inadequate, na.rm = T, vartype = NULL),
-            zn_inadequacy = survey_mean(zn_mg_inadequate, na.rm = T, vartype = NULL),
-            ca_inadequacy = survey_mean(ca_mg_inadequate, na.rm = T, vartype = NULL)) |>
+  summarise(
+    vita_inadequacy = survey_mean(vita_rae_mcg_inadequate, na.rm = TRUE, vartype = NULL),
+    thia_inadequacy  = survey_mean(thia_mg_inadequate,      na.rm = TRUE, vartype = NULL),
+    ribo_inadequacy  = survey_mean(ribo_mg_inadequate,      na.rm = TRUE, vartype = NULL),
+    vitb12_inadequacy = survey_mean(vitb12_mcg_inadequate,  na.rm = TRUE, vartype = NULL),
+    zn_inadequacy    = survey_mean(zn_mg_inadequate,        na.rm = TRUE, vartype = NULL),
+    ca_inadequacy    = survey_mean(ca_mg_inadequate,        na.rm = TRUE, vartype = NULL)
+  ) |>
+  pivot_longer(cols = -adm1, names_to = "micronutrient", values_to = "estimate") |>
   mutate(estimate = estimate * 100)
 
 #--------------------------------------------------------------------------------
