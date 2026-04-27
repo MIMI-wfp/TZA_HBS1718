@@ -162,6 +162,8 @@ p_vitB12_dumbbell <- ggplot(vitb12_df) +
                  legend.position = "right") 
 
 p_vitB12_dumbbell
+
+ggsave("training/vitB12_dumbbell.png", p_vitB12_dumbbell, width = 11, height = 6, dpi = 300)
 #--------------------------------------------------------------------------------
 
 # ADM1 (REGION) LEVEL ESTIMATES OF INADEQUATE MICRONUTRIENT INTAKE:
