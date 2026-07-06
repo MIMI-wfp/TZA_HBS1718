@@ -255,3 +255,134 @@ fe_full_prob <- function(data, group1 = NULL, group2 = NULL, bio_avail = 10, hh_
   
   return(result)
 }
+
+
+# Fortification scenario
+fortification_scenario <- function(
+    name_of_survey,
+    path_to_file = here::here("processed_data//")
+) {
+  
+  read_in_survey(name_of_survey, path_to_file)
+  
+  hh_info <- hh_info |>
+    dplyr::select(-c("iso3", "survey"))
+  
+  food_consumption <- food_consumption |>
+    dplyr::select(-c("iso3", "survey"))
+  
+  fc_table <- fc_table |>
+    dplyr::select(-c("iso3", "survey"))
+  
+  # =========================
+  # MAIZE FORTIFICATION
+  # =========================
+  
+  fc_table <- fc_table |>
+    left_join(maize_products, by = "item_code")
+  
+  fc_table <- fc_table |>
+    mutate(
+      vitb12_mcg = ifelse(
+        !is.na(fraction),
+        maize_standard$vitb12_mcg * fraction,
+        vitb12_mcg
+      ),
+      fe_mg = ifelse(
+        !is.na(fraction),
+        maize_standard$fe_mg * fraction,
+        fe_mg
+      ),
+      zn_mg = ifelse(
+        !is.na(fraction),
+        maize_standard$zn_mg * fraction,
+        zn_mg
+      ),
+      folate_mcg = ifelse(
+        !is.na(fraction),
+        maize_standard$folate_mcg * fraction,
+        folate_mcg
+      )
+    ) |>
+    select(-fraction)
+  
+  # =========================
+  # WHEAT FORTIFICATION
+  # =========================
+  
+  fc_table <- fc_table |>
+    left_join(wheat_products, by = "item_code")
+  
+  fc_table <- fc_table |>
+    mutate(
+      vitb12_mcg = ifelse(
+        !is.na(fraction),
+        wheat_standard$vitb12_mcg * fraction,
+        vitb12_mcg
+      ),
+      fe_mg = ifelse(
+        !is.na(fraction),
+        wheat_standard$fe_mg * fraction,
+        fe_mg
+      ),
+      zn_mg = ifelse(
+        !is.na(fraction),
+        wheat_standard$zn_mg * fraction,
+        zn_mg
+      ),
+      folate_mcg = ifelse(
+        !is.na(fraction),
+        wheat_standard$folate_mcg * fraction,
+        folate_mcg
+      )
+    ) |>
+    select(-fraction)
+  
+  # =========================
+  # OIL FORTIFICATION
+  # =========================
+  
+  fc_table <- fc_table |>
+    mutate(
+      vita_rae_mcg = ifelse(
+        item_code %in% oil_products$item_code,
+        oil_standard$vita_rae_mcg,
+        vita_rae_mcg
+      )
+    )
+  
+  # =========================
+  # APPARENT INTAKE
+  # =========================
+  
+  x <- food_consumption |>
+    left_join(fc_table, by = "item_code") |>
+    mutate(
+      across(
+        -c(item_code, hhid, item_name, quantity_100g, quantity_g),
+        ~ .x * quantity_100g
+      )
+    ) |>
+    group_by(hhid) |>
+    summarise(
+      across(
+        -c(item_code, item_name, quantity_100g, quantity_g),
+        ~ sum(.x, na.rm = TRUE)
+      ),
+      .groups = "drop"
+    ) |>
+    left_join(
+      hh_info |>
+        select(hhid, afe),
+      by = "hhid"
+    ) |>
+    mutate(
+      across(
+        -c(hhid, afe),
+        ~ .x / afe
+      )
+    ) |>
+    select(-afe)
+  
+  return(x)
+}
