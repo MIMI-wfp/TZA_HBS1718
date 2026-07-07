@@ -1,4 +1,4 @@
-## FUNCTIONS TO COMPILE BASE MODELS
+## General functions
 # Authors: Mo Osman and Uchenna Agu
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # INSTALL AND LOAD PACKAGES:
