@@ -385,18 +385,27 @@ fortification_scenario <- function(
 # Food item contribution to total micronutrient intake
 food_contribution <- function(
     nutrient,
+    group = c("total", "risk", "not_risk"),
     data_path = "processed_data",
     top_n = 70
 ) {
   
+  group <- match.arg(group)
+  
+  # ---------------------------------------------------------------------------
   # Household information
+  # ---------------------------------------------------------------------------
+  
   hh_info <- read_csv(
     file.path(data_path, "tza_hbs1718_hh_information.csv"),
     show_col_types = FALSE
   ) %>%
     select(hhid, afe)
   
+  # ---------------------------------------------------------------------------
   # Consumption data
+  # ---------------------------------------------------------------------------
+  
   cons_data <- read_csv(
     file.path(data_path, "tza_hbs1718_food_consumption.csv"),
     show_col_types = FALSE
@@ -407,13 +416,19 @@ food_contribution <- function(
     ) %>%
     select(-afe, -quantity_g)
   
+  # ---------------------------------------------------------------------------
   # Food composition table
+  # ---------------------------------------------------------------------------
+  
   fct_data <- read_csv(
     file.path(data_path, "tza_hbs1718_fct.csv"),
     show_col_types = FALSE
   )
   
+  # ---------------------------------------------------------------------------
   # Merge and calculate nutrient intake
+  # ---------------------------------------------------------------------------
+  
   cons_fct_data <- cons_data %>%
     left_join(fct_data, by = "item_code") %>%
     mutate(
@@ -421,17 +436,60 @@ food_contribution <- function(
         energy_kcal:folate_mcg,
         ~ .x * quantity_100g
       )
+    ) %>%
+    left_join(
+      tza_flags,
+      by = "hhid"
     )
+  
+  # ---------------------------------------------------------------------------
+  # Identify corresponding inadequacy flag
+  # ---------------------------------------------------------------------------
+  
+  nutrient_name <- rlang::as_name(
+    rlang::ensym(nutrient)
+  )
+  
+  risk_var <- paste0(
+    nutrient_name,
+    "_inadequate"
+  )
+  
+  # ---------------------------------------------------------------------------
+  # Filter by group
+  # ---------------------------------------------------------------------------
+  
+  if (group == "risk") {
+    
+    cons_fct_data <- cons_fct_data %>%
+      filter(.data[[risk_var]] == 1)
+    
+  }
+  
+  if (group == "not_risk") {
+    
+    cons_fct_data <- cons_fct_data %>%
+      filter(.data[[risk_var]] == 0)
+    
+  }
+  
+  # ---------------------------------------------------------------------------
+  # Calculate food contribution
+  # ---------------------------------------------------------------------------
   
   cons_fct_data %>%
     group_by(item_code, item_name) %>%
     summarise(
-      intake = sum({{ nutrient }}, na.rm = TRUE),
+      intake = sum(
+        {{ nutrient }},
+        na.rm = TRUE
+      ),
       .groups = "drop"
     ) %>%
     filter(intake > 0) %>%
     mutate(
-      contribution_pct = intake / sum(intake) * 100
+      contribution_pct =
+        intake / sum(intake) * 100
     ) %>%
     arrange(desc(contribution_pct)) %>%
     slice_head(n = top_n) %>%
