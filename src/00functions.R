@@ -1,7 +1,6 @@
 ## FUNCTIONS TO COMPILE BASE MODELS
 
-#-------------------------------------------------------------------------------
-
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # INSTALL AND LOAD PACKAGES:
 
 rq_packages <- c("readr", "tidyverse", "here")
@@ -15,7 +14,7 @@ lapply(rq_packages, require, character.only = T)
 
 rm(list= c("rq_packages", "installed_packages"))
 
-#-------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 path_to_file <- here::here("processed_data/")
 
@@ -48,7 +47,7 @@ allen_ear <- data.frame(
   )
 )
 
-#-------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 read_in_survey <- function(name_of_survey, path_to_file = here::here("processed_data/")){
   # given the name of the survey of country
@@ -60,8 +59,7 @@ read_in_survey <- function(name_of_survey, path_to_file = here::here("processed_
   fc_table <<- read.csv(paste0(path_to_file, paste0(name_of_survey, "_fct.csv")))
 }
 
-#-------------------------------------------------------------------------------
-
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 apparent_intake <- function(name_of_survey, path_to_file = here::here("processed_data//")){
   # Estimates apparent intake of nutrients based on consumed food items
   # and adult female equivalent unit of the household
@@ -97,8 +95,7 @@ apparent_intake <- function(name_of_survey, path_to_file = here::here("processed
 
 }
 
-#-------------------------------------------------------------------------------
-
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Define map function: 
 plot_map <- function(data, col, title, metric, outline_sf,
                      palette = "Zissou1", n = 100, limits = c(0, 100),
@@ -172,10 +169,7 @@ plot_map <- function(data, col, title, metric, outline_sf,
   p
 }
 
-#-------------------------------------------------------------------------------
-
-# PROBABILITY OF IRON INADEQUACY:
-
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Function for FE full probability
 fe_full_prob <- function(data, group1 = NULL, group2 = NULL, bio_avail = 10, hh_weight = NULL) {
   
@@ -256,7 +250,7 @@ fe_full_prob <- function(data, group1 = NULL, group2 = NULL, bio_avail = 10, hh_
   return(result)
 }
 
-
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Fortification scenario
 fortification_scenario <- function(
     name_of_survey,
@@ -385,4 +379,65 @@ fortification_scenario <- function(
     select(-afe)
   
   return(x)
+}
+
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Food item contribution to total micronutrient intake
+food_contribution <- function(
+    nutrient,
+    data_path = "processed_data",
+    top_n = 70
+) {
+  
+  # Household information
+  hh_info <- read_csv(
+    file.path(data_path, "tza_hbs1718_hh_information.csv"),
+    show_col_types = FALSE
+  ) %>%
+    select(hhid, afe)
+  
+  # Consumption data
+  cons_data <- read_csv(
+    file.path(data_path, "tza_hbs1718_food_consumption.csv"),
+    show_col_types = FALSE
+  ) %>%
+    left_join(hh_info, by = "hhid") %>%
+    mutate(
+      quantity_100g = ifelse(afe > 0, quantity_100g / afe, NA)
+    ) %>%
+    select(-afe, -quantity_g)
+  
+  # Food composition table
+  fct_data <- read_csv(
+    file.path(data_path, "tza_hbs1718_fct.csv"),
+    show_col_types = FALSE
+  )
+  
+  # Merge and calculate nutrient intake
+  cons_fct_data <- cons_data %>%
+    left_join(fct_data, by = "item_code") %>%
+    mutate(
+      across(
+        energy_kcal:folate_mcg,
+        ~ .x * quantity_100g
+      )
+    )
+  
+  cons_fct_data %>%
+    group_by(item_code, item_name) %>%
+    summarise(
+      intake = sum({{ nutrient }}, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    filter(intake > 0) %>%
+    mutate(
+      contribution_pct = intake / sum(intake) * 100
+    ) %>%
+    arrange(desc(contribution_pct)) %>%
+    slice_head(n = top_n) %>%
+    select(
+      item_code,
+      item_name,
+      contribution_pct
+    )
 }
