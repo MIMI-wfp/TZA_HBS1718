@@ -65,6 +65,14 @@ maize_standard <- list(
   folate_mcg = 150
 )
 
+# Expected micronutrient degradation (losses): 
+maize_mn_degradation <- list(
+  vitb12_mcg = 0.15,
+  fe_mg      = 0,
+  zn_mg      = 0,
+  folate_mcg = 0.17
+)
+
 
 # ------------------------------------------------------------------------------
 # WHEAT FLOUR PRODUCTS
@@ -113,6 +121,13 @@ wheat_standard <- list(
   folate_mcg = 300
 )
 
+# Expected micronutrient degradation (losses):
+wheat_mn_degradation <- list(
+  vitb12_mcg = 0.15,
+  fe_mg      = 0,
+  zn_mg      = 0,
+  folate_mcg = 0.17
+)
 
 # ------------------------------------------------------------------------------
 # EDIBLE OILS
@@ -134,7 +149,12 @@ oil_products <- tibble(
 # Vitamin A fortification standard
 # Units: mcg RAE/kg
 oil_standard <- list(
-  vita_rae_mcg = 3000
+  vita_rae_mcg = 1700
+)
+
+# Expected micronutrient degradation (losses):
+oil_mn_degradation <- list(
+  vita_rae_mcg = 0.32
 )
 
 

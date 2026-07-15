@@ -279,22 +279,22 @@ fortification_scenario <- function(
     mutate(
       vitb12_mcg = ifelse(
         !is.na(fraction),
-        maize_standard$vitb12_mcg * fraction,
+        maize_standard$vitb12_mcg * fraction * (1 - maize_mn_degradation$vitb12_mcg),
         vitb12_mcg
       ),
       fe_mg = ifelse(
         !is.na(fraction),
-        maize_standard$fe_mg * fraction,
+        maize_standard$fe_mg * fraction * (1 - maize_mn_degradation$fe_mg),
         fe_mg
       ),
       zn_mg = ifelse(
         !is.na(fraction),
-        maize_standard$zn_mg * fraction,
+        maize_standard$zn_mg * fraction * (1 - maize_mn_degradation$zn_mg),
         zn_mg
       ),
       folate_mcg = ifelse(
         !is.na(fraction),
-        maize_standard$folate_mcg * fraction,
+        maize_standard$folate_mcg * fraction * (1 - maize_mn_degradation$folate_mcg),
         folate_mcg
       )
     ) |>
@@ -311,22 +311,22 @@ fortification_scenario <- function(
     mutate(
       vitb12_mcg = ifelse(
         !is.na(fraction),
-        wheat_standard$vitb12_mcg * fraction,
+        wheat_standard$vitb12_mcg * fraction * (1 - wheat_mn_degradation$vitb12_mcg),
         vitb12_mcg
       ),
       fe_mg = ifelse(
         !is.na(fraction),
-        wheat_standard$fe_mg * fraction,
+        wheat_standard$fe_mg * fraction * (1 - wheat_mn_degradation$fe_mg),
         fe_mg
       ),
       zn_mg = ifelse(
         !is.na(fraction),
-        wheat_standard$zn_mg * fraction,
+        wheat_standard$zn_mg * fraction * (1 - wheat_mn_degradation$zn_mg),
         zn_mg
       ),
       folate_mcg = ifelse(
         !is.na(fraction),
-        wheat_standard$folate_mcg * fraction,
+        wheat_standard$folate_mcg * fraction * (1 - wheat_mn_degradation$folate_mcg),
         folate_mcg
       )
     ) |>
@@ -340,7 +340,7 @@ fortification_scenario <- function(
     mutate(
       vita_rae_mcg = ifelse(
         item_code %in% oil_products$item_code,
-        oil_standard$vita_rae_mcg,
+        oil_standard$vita_rae_mcg * (1 - oil_mn_degradation$vita_rae_mcg),
         vita_rae_mcg
       )
     )
