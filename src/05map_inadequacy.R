@@ -29,11 +29,12 @@ hh_information <- read_csv("processed_data/tza_hbs1718_hh_information.csv")
 #-------------------------------------------------------------------------------
 
 # SHAPEFILES: 
-tanzania_1 <- st_read("shapefiles/tanzania_1") |> 
+tanzania_1 <- st_read("shapefiles/tza_admbnda_adm1_20181019.shp") |> 
   dplyr::select(
     adm1 = ADM1_EN, 
     geometry
   ) |> 
+  filter(!str_detect(adm1, "Unguja|Pemba|Mjini")) |>
   mutate(adm1 = recode(
     adm1, 
     "Dar-es-salaam" = "Dar Es Salaam",
@@ -52,8 +53,8 @@ rm(list = setdiff(ls(), c("base_ai", "hh_information", "allen_ear", "tanzania_1"
 # BINARISE RISK OF INADEQUATE MICRONUTRIENT INTAKE:
 
 # Specify list of micronutrients: 
-micronutrients <- c("vita_rae_mcg", "thia_mg", "ribo_mg", "vitb12_mcg",
-                    "fe_mg", "ca_mg", "zn_mg")
+micronutrients <- c("vita_rae_mcg", "folate_mcg",  "vitb12_mcg",
+                    "fe_mg",  "zn_mg")
 
 for (i in micronutrients) {
   
@@ -77,10 +78,8 @@ analysis_df <- base_ai |>
 mn_inadequacy <- analysis_df |> 
   group_by(adm1) |> 
   summarise(vita_inadequacy = survey_mean(vita_rae_mcg_inadequate, na.rm = T, vartype = NULL),
-            thia_inadequacy = survey_mean(thia_mg_inadequate, na.rm = T, vartype = NULL),
-            ribo_inadequacy = survey_mean(ribo_mg_inadequate, na.rm = T, vartype = NULL),
+            folate_inadequacy = survey_mean(folate_mcg_inadequate, na.rm = T, vartype = NULL),
             vitb12_inadequacy = survey_mean(vitb12_mcg_inadequate, na.rm = T, vartype = NULL),
-            fe_inadequacy = survey_mean(fe_mg_inadequate, na.rm = T, vartype = NULL),
             zn_inadequacy = survey_mean(zn_mg_inadequate, na.rm = T, vartype = NULL)) |> 
   left_join(tanzania_1, by = "adm1")
 
@@ -88,6 +87,17 @@ mn_inadequacy <- analysis_df |>
 mn_inadequacy <- mn_inadequacy |> 
   mutate(across(-c(adm1, geometry), ~ .x * 100)) |> 
   mutate(across(-c(adm1, geometry), ~ round(.x, digits = 1)))
+
+tza_base_ai_fe <- base_ai |>
+  left_join(hh_information, by = "hhid") |>
+  select(hhid, adm1, adm2, survey_wgt, fe_mg)
+
+
+tza_fe_inadequacy_adm1 <- fe_full_prob(tza_base_ai_fe, group1 = adm1, bio_avail = 10, hh_weight = "hh_weight") %>%
+  rename(fe_inadequacy=fe_mg_prop)
+
+mn_inadequacy <- mn_inadequacy |>
+  left_join(tza_fe_inadequacy_adm1, by=c("adm1"="subpopulation"))
 
 #-------------------------------------------------------------------------------
 
@@ -98,7 +108,8 @@ mn_mar <- hh_information |>
   left_join(base_ai, by = "hhid") |>
   # Nutrient adequacy ratio (NAR) for each micronutrient:
   mutate(va_nar = vita_rae_mcg /allen_ear[allen_ear$nutrient == "vita_rae_mcg", "ear_value"],
-         vb12_nar = vitb12_mcg /allen_ear[allen_ear$nutrient == "vitb12_mcg", "ear_value"],,
+         vb12_nar = vitb12_mcg /allen_ear[allen_ear$nutrient == "vitb12_mcg", "ear_value"],
+         fol_nar = folate_mcg /allen_ear[allen_ear$nutrient == "folate_mcg", "ear_value"],
          fe_nar = fe_mg /allen_ear[allen_ear$nutrient == "fe_mg", "ear_value"],
          zn_nar = zn_mg /allen_ear[allen_ear$nutrient == "zn_mg", "ear_value"]) |> 
   # Truncate NAR values to 1:
@@ -129,26 +140,30 @@ mar_inadequacy <- mar_inadequacy |>
 
 
 # MAP INADEQUACY:
- micronutrients <- c("vita_inadequacy", "thia_inadequacy", "ribo_inadequacy",
+micronutrients <- c("vita_inadequacy", "folate_inadequacy",
                     "vitb12_inadequacy", "fe_inadequacy", "zn_inadequacy")
 
 mn_inadequacy <- st_as_sf(mn_inadequacy)
 
 for (i in micronutrients) {
-
+  
   p <- plot_map(
     data = mn_inadequacy,
     col = i,
-    title = i,
+    title = "",
     metric = "Risk of inadequate intake (%)",
     outline_sf = tanzania_1
   )
-
+  
   print(p)
-
-  # ggsave(filename = paste0("figures/maps/", i, "_map.png"),
-  #        plot = p,
-  #        width = 8, height = 6, dpi = 300)
+  
+  ggsave(
+    filename = paste0("figures/maps/", i, "_map.png"),
+    plot = p,
+    width = 8,
+    height = 6,
+    dpi = 300
+  )
   
 }
 
@@ -158,7 +173,7 @@ mar_inadequacy <- st_as_sf(mar_inadequacy)
 p_mar <- plot_map(
   data = mar_inadequacy,
   col = "mar",
-  title = "MAR (Vitamin A, B12, Iron, Zinc)",
+  title = "",
   metric = "Risk of inadequate intake (%)",
   outline_sf = tanzania_1
 )

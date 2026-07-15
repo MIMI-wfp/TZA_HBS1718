@@ -1,7 +1,6 @@
-## FUNCTIONS TO COMPILE BASE MODELS
-
-#-------------------------------------------------------------------------------
-
+## General functions
+# Authors: Mo Osman and Uchenna Agu
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # INSTALL AND LOAD PACKAGES:
 
 rq_packages <- c("readr", "tidyverse", "here")
@@ -15,7 +14,7 @@ lapply(rq_packages, require, character.only = T)
 
 rm(list= c("rq_packages", "installed_packages"))
 
-#-------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 path_to_file <- here::here("processed_data/")
 
@@ -48,7 +47,7 @@ allen_ear <- data.frame(
   )
 )
 
-#-------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 read_in_survey <- function(name_of_survey, path_to_file = here::here("processed_data/")){
   # given the name of the survey of country
@@ -60,8 +59,7 @@ read_in_survey <- function(name_of_survey, path_to_file = here::here("processed_
   fc_table <<- read.csv(paste0(path_to_file, paste0(name_of_survey, "_fct.csv")))
 }
 
-#-------------------------------------------------------------------------------
-
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 apparent_intake <- function(name_of_survey, path_to_file = here::here("processed_data//")){
   # Estimates apparent intake of nutrients based on consumed food items
   # and adult female equivalent unit of the household
@@ -97,8 +95,7 @@ apparent_intake <- function(name_of_survey, path_to_file = here::here("processed
 
 }
 
-#-------------------------------------------------------------------------------
-
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Define map function: 
 plot_map <- function(data, col, title, metric, outline_sf,
                      palette = "Zissou1", n = 100, limits = c(0, 100),
@@ -114,7 +111,7 @@ plot_map <- function(data, col, title, metric, outline_sf,
     geom_sf(data = outline_sf,
             fill = NA,
             color = "black",
-            size = 1) +
+            size = 0.5) +
     # continuous palette
     scale_fill_gradientn(
       colours = wes_palette(palette, n = n, type = "continuous"),
@@ -129,7 +126,7 @@ plot_map <- function(data, col, title, metric, outline_sf,
       axis.title       = element_blank(),
       axis.text        = element_blank(),
       axis.ticks       = element_blank(),
-      legend.position  = "bottom",
+      legend.position  = "none",
       legend.direction = "horizontal",
       legend.title     = element_text(hjust = 0.5),
       legend.key.width = unit(1.35, "cm"),
@@ -172,85 +169,333 @@ plot_map <- function(data, col, title, metric, outline_sf,
   p
 }
 
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Function for FE full probability
+fe_full_prob <- function(data, group1 = NULL, group2 = NULL, bio_avail = 10, hh_weight = NULL) {
+  
+  # Compute probability of inadequacy based on iron intake
+  data <- data %>%
+    mutate(prob_inad = case_when(
+      bio_avail == 5 ~ case_when(
+        fe_mg <= 15 ~ "1",
+        fe_mg <= 16.7 & fe_mg > 15 ~ "0.96",
+        fe_mg <= 18.7 & fe_mg > 16.7 ~ "0.93",
+        fe_mg <= 21.4 & fe_mg > 18.7 ~ "0.85",
+        fe_mg <= 23.6 & fe_mg > 21.4 ~ "0.75",
+        fe_mg <= 25.7 & fe_mg > 23.6 ~ "0.65",
+        fe_mg <= 27.8 & fe_mg > 25.7 ~ "0.55",
+        fe_mg <= 30.2 & fe_mg > 27.8 ~ "0.45",
+        fe_mg <= 33.2 & fe_mg > 30.2 ~ "0.35",
+        fe_mg <= 37.3 & fe_mg > 33.2 ~ "0.25",
+        fe_mg <= 45.0 & fe_mg > 37.3 ~ "0.15",
+        fe_mg <= 53.5 & fe_mg > 45.0 ~ "0.08",
+        fe_mg <= 63.0 & fe_mg > 53.5 ~ "0.04",
+        fe_mg > 63 ~ "0"),
+      bio_avail == 10 ~ case_when(
+        fe_mg <= 7.5 ~ "1",
+        fe_mg <= 8.4 & fe_mg > 7.5 ~ "0.96",
+        fe_mg <= 9.4 & fe_mg > 8.4 ~ "0.93",
+        fe_mg <= 10.7 & fe_mg > 9.4 ~ "0.85",
+        fe_mg <= 11.8 & fe_mg > 10.7 ~ "0.75",
+        fe_mg <= 12.9 & fe_mg > 11.8 ~ "0.65",
+        fe_mg <= 13.9 & fe_mg > 12.9 ~ "0.55",
+        fe_mg <= 15.1 & fe_mg > 13.9 ~ "0.45",
+        fe_mg <= 16.6 & fe_mg > 15.1 ~ "0.35",
+        fe_mg <= 18.7 & fe_mg > 16.6 ~ "0.25",
+        fe_mg <= 22.5 & fe_mg > 18.7 ~ "0.15",
+        fe_mg <= 26.7 & fe_mg > 22.5 ~ "0.08",
+        fe_mg <= 31.5 & fe_mg > 26.7 ~ "0.04",
+        fe_mg > 31.5 ~ "0"),
+      bio_avail == 15 ~ case_when(
+        fe_mg <= 5 ~ "1",
+        fe_mg <= 5.6 & fe_mg > 5 ~ "0.96",
+        fe_mg <= 6.2 & fe_mg > 5.6 ~ "0.93",
+        fe_mg <= 7.1 & fe_mg > 6.2 ~ "0.85",
+        fe_mg <= 7.9 & fe_mg > 7.1 ~ "0.75",
+        fe_mg <= 8.6 & fe_mg > 7.9 ~ "0.65",
+        fe_mg <= 9.3 & fe_mg > 8.6 ~ "0.55",
+        fe_mg <= 10.1 & fe_mg > 9.3 ~ "0.45",
+        fe_mg <= 11.1 & fe_mg > 10.1 ~ "0.35",
+        fe_mg <= 12.4 & fe_mg > 11.1 ~ "0.25",
+        fe_mg <= 15.0 & fe_mg > 12.4 ~ "0.15",
+        fe_mg <= 17.8 & fe_mg > 15.0 ~ "0.08",
+        fe_mg <= 21.0 & fe_mg > 17.8 ~ "0.04",
+        fe_mg > 21.0 ~ "0")
+    ))
+  
+  # Assign weight column 
+  if (!is.null(hh_weight) && hh_weight %in% colnames(data)) {
+    data <- data %>% rename(weight = all_of(hh_weight))
+  } else {
+    data <- data %>% mutate(weight = 1)
+  }
+  
+  # Compute prevalence of iron inadequacy
+  if (missing(group1) & missing(group2)) {
+    result <- data %>%
+      group_by(prob_inad) %>%
+      summarise(fe_weighted = sum(weight), .groups = "drop") %>%
+      summarise(prev_inad = sum(fe_weighted * as.numeric(prob_inad)) / sum(fe_weighted) * 100) %>%
+      pivot_longer(cols = everything(), names_to = "subpopulation", values_to = "prev_inad")
+  } else {
+    result <- data %>%
+      group_by(prob_inad, {{group1}}, {{group2}}) %>%
+      summarise(fe_weighted = sum(weight), .groups = "drop") %>%
+      pivot_wider(names_from = {{group1}}, values_from = fe_weighted, values_fill = 0) %>%
+      rename_with(~ gsub("^prev_inad_", "", .x)) %>%  # Remove prefix to maintain original names
+      summarise(across(-prob_inad, ~ sum(.x * as.numeric(prob_inad)) / sum(.x) * 100, .names = "{.col}")) %>%
+      pivot_longer(cols = everything(), names_to = "subpopulation", values_to = "fe_mg_prop")
+  }
+  
+  return(result)
+}
 
-# plot_map <- function(data, col, title, metric, outline_sf, palette = "Zissou1", 
-#                      n = 100, limits = c(0,100)) {
-#   ggplot() +
-#     # fill the states by your chosen variable
-#     geom_sf(data = data,
-#             aes_string(fill = col),
-#             color = "black",
-#             size = 0.2) +
-#     # add a single black outline
-#     geom_sf(data = outline_sf,
-#             fill = NA,
-#             color = "black",
-#             size = 1) +
-#     # continuous palette
-#     scale_fill_gradientn(
-#       colours = wes_palette(palette, n = n, type = "continuous"),
-#       limits = limits,
-#       name  = metric) +
-#     labs(title   = title) +
-#     theme_minimal() +
-#     theme(
-#       plot.title       = element_text(hjust = 0.5, size = 16, face = "bold"),
-#       plot.caption     = element_text(hjust = 0.5),
-#       panel.grid       = element_blank(),
-#       axis.title       = element_blank(),
-#       axis.text        = element_blank(),
-#       axis.ticks       = element_blank(),
-#       legend.position  = "bottom",
-#       legend.direction = "horizontal",
-#       legend.title     = element_text(hjust = 0.5),
-#       legend.key.width = unit(1.35, "cm"),
-#       legend.key.height= unit(0.6, "cm")
-#     )
-# }
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Fortification scenario
+fortification_scenario <- function(
+    name_of_survey,
+    path_to_file = here::here("processed_data//")
+) {
+  
+  read_in_survey(name_of_survey, path_to_file)
+  
+  hh_info <- hh_info |>
+    dplyr::select(-c("iso3", "survey"))
+  
+  food_consumption <- food_consumption |>
+    dplyr::select(-c("iso3", "survey"))
+  
+  fc_table <- fc_table |>
+    dplyr::select(-c("iso3", "survey"))
+  
+  # =========================
+  # MAIZE FORTIFICATION
+  # =========================
+  
+  fc_table <- fc_table |>
+    left_join(maize_products, by = "item_code")
+  
+  fc_table <- fc_table |>
+    mutate(
+      vitb12_mcg = ifelse(
+        !is.na(fraction),
+        maize_standard$vitb12_mcg * fraction,
+        vitb12_mcg
+      ),
+      fe_mg = ifelse(
+        !is.na(fraction),
+        maize_standard$fe_mg * fraction,
+        fe_mg
+      ),
+      zn_mg = ifelse(
+        !is.na(fraction),
+        maize_standard$zn_mg * fraction,
+        zn_mg
+      ),
+      folate_mcg = ifelse(
+        !is.na(fraction),
+        maize_standard$folate_mcg * fraction,
+        folate_mcg
+      )
+    ) |>
+    select(-fraction)
+  
+  # =========================
+  # WHEAT FORTIFICATION
+  # =========================
+  
+  fc_table <- fc_table |>
+    left_join(wheat_products, by = "item_code")
+  
+  fc_table <- fc_table |>
+    mutate(
+      vitb12_mcg = ifelse(
+        !is.na(fraction),
+        wheat_standard$vitb12_mcg * fraction,
+        vitb12_mcg
+      ),
+      fe_mg = ifelse(
+        !is.na(fraction),
+        wheat_standard$fe_mg * fraction,
+        fe_mg
+      ),
+      zn_mg = ifelse(
+        !is.na(fraction),
+        wheat_standard$zn_mg * fraction,
+        zn_mg
+      ),
+      folate_mcg = ifelse(
+        !is.na(fraction),
+        wheat_standard$folate_mcg * fraction,
+        folate_mcg
+      )
+    ) |>
+    select(-fraction)
+  
+  # =========================
+  # OIL FORTIFICATION
+  # =========================
+  
+  fc_table <- fc_table |>
+    mutate(
+      vita_rae_mcg = ifelse(
+        item_code %in% oil_products$item_code,
+        oil_standard$vita_rae_mcg,
+        vita_rae_mcg
+      )
+    )
+  
+  # =========================
+  # APPARENT INTAKE
+  # =========================
+  
+  x <- food_consumption |>
+    left_join(fc_table, by = "item_code") |>
+    mutate(
+      across(
+        -c(item_code, hhid, item_name, quantity_100g, quantity_g),
+        ~ .x * quantity_100g
+      )
+    ) |>
+    group_by(hhid) |>
+    summarise(
+      across(
+        -c(item_code, item_name, quantity_100g, quantity_g),
+        ~ sum(.x, na.rm = TRUE)
+      ),
+      .groups = "drop"
+    ) |>
+    left_join(
+      hh_info |>
+        select(hhid, afe),
+      by = "hhid"
+    ) |>
+    mutate(
+      across(
+        -c(hhid, afe),
+        ~ .x / afe
+      )
+    ) |>
+    select(-afe)
+  
+  return(x)
+}
 
-#-------------------------------------------------------------------------------
-
-# PROBABILITY OF IRON INADEQUACY:
-
-fe_prob_inadequacy <- function(base_ai_df, bio_avail = 5) {
-# Calculate probability of inadequacy for each household
-# bioavailability:
-base_ai_df <- base_ai_df |> 
-  mutate(fe_prob_inad = case_when(
-  bio_avail == 5 ~ 
-    case_when(
-      fe_mg <= 15 ~ 1,
-      fe_mg > 15 & fe_mg <= 16.7 ~ 0.96,
-      fe_mg > 16.7 & fe_mg <= 18.7 ~ 0.93,
-      fe_mg > 18.7 & fe_mg <= 21.4 ~ 0.85,
-      fe_mg > 21.4 & fe_mg <= 23.6 ~ 0.75,
-      fe_mg > 23.6 & fe_mg <= 25.7 ~ 0.65,
-      fe_mg > 25.7 & fe_mg <= 27.8 ~ 0.55,
-      fe_mg > 27.8 & fe_mg <= 30.2 ~ 0.45,
-      fe_mg > 30.2 & fe_mg <= 33.2 ~ 0.35,
-      fe_mg > 33.2 & fe_mg <= 37.3 ~ 0.25,
-      fe_mg > 37.3 & fe_mg <= 45.0 ~ 0.15,
-      fe_mg > 45.0 & fe_mg <= 53.5 ~ 0.08,
-      fe_mg > 53.5 & fe_mg <= 63.0 ~ 0.04,
-      fe_mg > 63.0 ~ 0,
-      TRUE ~ NA_real_
-    ),
-  bio_avail == 10 ~
-    case_when(
-      fe_mg <= 7.5 ~ 1,
-      fe_mg > 7.5 & fe_mg <= 8.4 ~ 0.96,
-      fe_mg > 8.4 & fe_mg <= 9.4 ~ 0.93,
-      fe_mg > 9.4 & fe_mg <= 10.7 ~ 0.85,
-      fe_mg > 10.7 & fe_mg <= 11.8 ~ 0.75,
-      fe_mg > 11.8 & fe_mg <= 12.9 ~ 0.65,
-      fe_mg > 12.9 & fe_mg <= 13.9 ~ 0.55,
-      fe_mg > 13.9 & fe_mg <= 15.1 ~ 0.45,
-      fe_mg > 15.1 & fe_mg <= 16.6 ~ 0.35,
-      fe_mg > 16.6 & fe_mg <= 18.7 ~ 0.25,
-      fe_mg > 18.7 & fe_mg <= 22.5 ~ 0.15,
-      fe_mg > 22.5 & fe_mg <= 26.7 ~ 0.08,
-      fe_mg > 26.7 & fe_mg <= 31.5 ~ 0.04,
-      fe_mg > 31.5 ~ 0,
-      TRUE ~ NA_real_
-  ))) # SOURCE: WHO guidelines on food fortification with micronutrients (2006). Table 7.5, page 158
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Food item contribution to total micronutrient intake
+food_contribution <- function(
+    nutrient,
+    group = c("total", "risk", "not_risk"),
+    data_path = "processed_data",
+    top_n = 70
+) {
+  
+  group <- match.arg(group)
+  
+  # ---------------------------------------------------------------------------
+  # Household information
+  # ---------------------------------------------------------------------------
+  
+  hh_info <- read_csv(
+    file.path(data_path, "tza_hbs1718_hh_information.csv"),
+    show_col_types = FALSE
+  ) %>%
+    select(hhid, afe)
+  
+  # ---------------------------------------------------------------------------
+  # Consumption data
+  # ---------------------------------------------------------------------------
+  
+  cons_data <- read_csv(
+    file.path(data_path, "tza_hbs1718_food_consumption.csv"),
+    show_col_types = FALSE
+  ) %>%
+    left_join(hh_info, by = "hhid") %>%
+    mutate(
+      quantity_100g = ifelse(afe > 0, quantity_100g / afe, NA)
+    ) %>%
+    select(-afe, -quantity_g)
+  
+  # ---------------------------------------------------------------------------
+  # Food composition table
+  # ---------------------------------------------------------------------------
+  
+  fct_data <- read_csv(
+    file.path(data_path, "tza_hbs1718_fct.csv"),
+    show_col_types = FALSE
+  )
+  
+  # ---------------------------------------------------------------------------
+  # Merge and calculate nutrient intake
+  # ---------------------------------------------------------------------------
+  
+  cons_fct_data <- cons_data %>%
+    left_join(fct_data, by = "item_code") %>%
+    mutate(
+      across(
+        energy_kcal:folate_mcg,
+        ~ .x * quantity_100g
+      )
+    ) %>%
+    left_join(
+      tza_flags,
+      by = "hhid"
+    )
+  
+  # ---------------------------------------------------------------------------
+  # Identify corresponding inadequacy flag
+  # ---------------------------------------------------------------------------
+  
+  nutrient_name <- rlang::as_name(
+    rlang::ensym(nutrient)
+  )
+  
+  risk_var <- paste0(
+    nutrient_name,
+    "_inadequate"
+  )
+  
+  # ---------------------------------------------------------------------------
+  # Filter by group
+  # ---------------------------------------------------------------------------
+  
+  if (group == "risk") {
+    
+    cons_fct_data <- cons_fct_data %>%
+      filter(.data[[risk_var]] == 1)
+    
+  }
+  
+  if (group == "not_risk") {
+    
+    cons_fct_data <- cons_fct_data %>%
+      filter(.data[[risk_var]] == 0)
+    
+  }
+  
+  # ---------------------------------------------------------------------------
+  # Calculate food contribution
+  # ---------------------------------------------------------------------------
+  
+  cons_fct_data %>%
+    group_by(item_code, item_name) %>%
+    summarise(
+      intake = sum(
+        {{ nutrient }},
+        na.rm = TRUE
+      ),
+      .groups = "drop"
+    ) %>%
+    filter(intake > 0) %>%
+    mutate(
+      contribution_pct =
+        intake / sum(intake) * 100
+    ) %>%
+    arrange(desc(contribution_pct)) %>%
+    slice_head(n = top_n) %>%
+    select(
+      item_code,
+      item_name,
+      contribution_pct
+    )
 }
