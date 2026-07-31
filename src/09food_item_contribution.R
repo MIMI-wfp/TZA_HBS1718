@@ -1,5 +1,6 @@
 # ==============================================================================
 # Author: Uchenna AGU
+# Contributor: Mo Osman
 # Use: Estimate food-item contributions to micronutrient intake among:
 #      (1) Total population
 #      (2) Households at risk of inadequacy
@@ -14,7 +15,10 @@
 # ==============================================================================
 # List of required packages
 rq_packages <- c(
-  "tidyverse")
+  "tidyverse",
+  "readr",
+  "gt"
+)
 
 # Install missing packages
 installed_packages <- rq_packages %in% rownames(installed.packages())
@@ -96,6 +100,10 @@ vitA_not_risk <- food_contribution(
   group = "not_risk"
 )
 
+# Build a unified table to compare food-item MN contributions between households not at risk of inadequacy and those at risk of inadequacy
+vitA_contributions <- contribution_table(vitA_total, vitA_risk, vitA_not_risk, "Vitamin A")
+vitA_contributions
+
 # ==============================================================================
 # FOLATE
 # ==============================================================================
@@ -114,6 +122,9 @@ folate_not_risk <- food_contribution(
   folate_mcg,
   group = "not_risk"
 )
+
+folate_contributions <- contribution_table(folate_total, folate_risk, folate_not_risk, "Folate")
+folate_contributions
 
 # ==============================================================================
 # VITAMIN B12
@@ -134,6 +145,9 @@ b12_not_risk <- food_contribution(
   group = "not_risk"
 )
 
+b12_contributions <- contribution_table(b12_total, b12_risk, b12_not_risk, "Vitamin B12")
+b12_contributions
+
 # ==============================================================================
 # IRON
 # ==============================================================================
@@ -152,6 +166,9 @@ iron_not_risk <- food_contribution(
   fe_mg,
   group = "not_risk"
 )
+
+iron_contributions <- contribution_table(iron_total, iron_risk, iron_not_risk, "Iron")
+iron_contributions
 
 # ==============================================================================
 # ZINC
@@ -172,30 +189,16 @@ zinc_not_risk <- food_contribution(
   group = "not_risk"
 )
 
+zinc_contributions <- contribution_table(zinc_total, zinc_risk, zinc_not_risk, "Zinc")
+zinc_contributions
+
 # ==============================================================================
 # OUTPUTS
 # ==============================================================================
-#
-# For each micronutrient, three datasets are generated:
-#
-# *_total
-#     Top contributing foods among all households
-#
-# *_risk
-#     Top contributing foods among households whose intake is
-#     below the EAR (at risk of inadequacy)
-#
-# *_not_risk
-#     Top contributing foods among households whose intake meets
-#     or exceeds the EAR (not at risk of inadequacy)
-#
-# Each output contains:
-#     item_code
-#     item_name
-#     contribution_pct
-#
-# contribution_pct =
-#     Percentage contribution of each food item to total
-#     micronutrient intake within the specified population group.
-#
-# ==============================================================================
+
+# Save gt tables as images to file: 
+gtsave(vitA_contributions, "figures/food_item_contributions/vitA.png")
+gtsave(folate_contributions, "figures/food_item_contributions/folate.png")
+gtsave(b12_contributions, "figures/food_item_contributions/b12.png")
+gtsave(iron_contributions, "figures/food_item_contributions/iron.png")
+gtsave(zinc_contributions, "figures/food_item_contributions/zinc.png")

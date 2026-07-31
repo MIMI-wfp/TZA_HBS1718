@@ -387,11 +387,11 @@ food_contribution <- function(
     nutrient,
     group = c("total", "risk", "not_risk"),
     data_path = "processed_data",
-    top_n = 70
+    top_n = 200
 ) {
   
   group <- match.arg(group)
-  
+
   # ---------------------------------------------------------------------------
   # Household information
   # ---------------------------------------------------------------------------
@@ -499,3 +499,47 @@ food_contribution <- function(
       contribution_pct
     )
 }
+
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Create a gt summary table for food item contributions: 
+# Create a gt summary table: 
+
+contribution_table <- function(total, risk, not_risk, nutrient_label) {
+  total |>
+    rename(contribution_pct_all = contribution_pct) |>
+    full_join(risk, by = c("item_code", "item_name")) |>
+    rename(contribution_pct_risk = contribution_pct) |>
+    full_join(not_risk, by = c("item_code", "item_name")) |>
+    rename(contribution_pct_not_risk = contribution_pct) |>
+    mutate(
+      contribution_pct_all = ifelse(is.na(contribution_pct_all), 0, contribution_pct_all),
+      contribution_pct_risk = ifelse(is.na(contribution_pct_risk), 0, contribution_pct_risk),
+      contribution_pct_not_risk = ifelse(is.na(contribution_pct_not_risk), 0, contribution_pct_not_risk)
+    ) |>
+    mutate(contribution_pct_delta = contribution_pct_not_risk - contribution_pct_risk) |>
+    arrange(desc(contribution_pct_delta)) |>
+    head(5) |>
+    mutate(across(starts_with("contribution_pct"), ~ round(.x, 1))) |>
+    dplyr::select(item_name, contribution_pct_not_risk, contribution_pct_risk, contribution_pct_delta) |>
+    gt() |>
+    tab_header(
+      title = paste0("Top 5 Food Items according to contribution to total ", nutrient_label, " Intake (%)"),
+      subtitle = "Ranked by difference (Δ) in contribution between households not at risk of inadequacy and those at risk of inadequacy"
+    ) |>
+    cols_label(
+      item_name = "Food Item",
+      contribution_pct_risk = "At Risk of Inadequacy",
+      contribution_pct_not_risk = "Not at Risk of Inadequacy",
+      contribution_pct_delta = "Δ"
+    ) |>
+    cols_align(
+      align = "center",
+      columns = c(contribution_pct_risk, contribution_pct_not_risk, contribution_pct_delta)
+    ) |>
+    tab_style(
+      style = cell_text(weight = "bold"),
+      locations = cells_column_labels(everything())
+    )
+}
+  
