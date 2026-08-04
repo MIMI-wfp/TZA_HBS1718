@@ -75,6 +75,15 @@ analysis_df <- base_ai |>
             by = "hhid") |>
   as_survey_design(weights = survey_wgt)
 
+# National level estimates: 
+national_mn_inadequacy <- analysis_df |> 
+  summarise(vita_inadequacy = survey_mean(vita_rae_mcg_inadequate, na.rm = T, vartype = NULL),
+            folate_inadequacy = survey_mean(folate_mcg_inadequate, na.rm = T, vartype = NULL),
+            vitb12_inadequacy = survey_mean(vitb12_mcg_inadequate, na.rm = T, vartype = NULL),
+            zn_inadequacy = survey_mean(zn_mg_inadequate, na.rm = T, vartype = NULL)) |> 
+  mutate(across(everything(), ~ .x * 100)) |> 
+  mutate(across(everything(), ~ round(.x, digits = 1)))
+
 mn_inadequacy <- analysis_df |> 
   group_by(adm1) |> 
   summarise(vita_inadequacy = survey_mean(vita_rae_mcg_inadequate, na.rm = T, vartype = NULL),
@@ -92,6 +101,7 @@ tza_base_ai_fe <- base_ai |>
   left_join(hh_information, by = "hhid") |>
   select(hhid, adm1, adm2, survey_wgt, fe_mg)
 
+national_fe_inadequacy <- fe_full_prob(tza_base_ai_fe, bio_avail = 10, hh_weight = "survey_wgt") 
 
 tza_fe_inadequacy_adm1 <- fe_full_prob(tza_base_ai_fe, group1 = adm1, bio_avail = 10, hh_weight = "hh_weight") %>%
   rename(fe_inadequacy=fe_mg_prop)
