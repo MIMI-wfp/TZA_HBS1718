@@ -144,8 +144,8 @@ tanzania_1 <- st_read("shapefiles/tza_admbnda_adm1_20181019.shp") |>
 #--------------------------------------------------
 # 8. Merge and plot (reverse palette) with predefined function
 #--------------------------------------------------
-tza_vas_coverage <- adm1_vas |>
-  left_join(tanzania_1, by="adm1")
+tza_vas_coverage <- tanzania_1 |>
+  left_join(adm1_vas, by = "adm1")
 
 source("src/00functions.R")
 

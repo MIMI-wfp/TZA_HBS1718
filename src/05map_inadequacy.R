@@ -146,7 +146,7 @@ micronutrients <- c("vita_inadequacy", "folate_inadequacy",
 mn_inadequacy <- st_as_sf(mn_inadequacy)
 
 for (i in micronutrients) {
-  
+
   p <- plot_map(
     data = mn_inadequacy,
     col = i,
@@ -154,9 +154,9 @@ for (i in micronutrients) {
     metric = "Risk of inadequate intake (%)",
     outline_sf = tanzania_1
   )
-  
+
   print(p)
-  
+
   ggsave(
     filename = paste0("figures/maps/", i, "_map.png"),
     plot = p,
@@ -168,17 +168,17 @@ for (i in micronutrients) {
 }
 
 # MAP MAR INADEQUACY:
-mar_inadequacy <- st_as_sf(mar_inadequacy)
-
-p_mar <- plot_map(
-  data = mar_inadequacy,
-  col = "mar",
-  title = "",
-  metric = "Risk of inadequate intake (%)",
-  outline_sf = tanzania_1
-)
-
-p_mar
+# mar_inadequacy <- st_as_sf(mar_inadequacy)
+# 
+# p_mar <- plot_map(
+#   data = mar_inadequacy,
+#   col = "mar",
+#   title = "",
+#   metric = "Risk of inadequate intake (%)",
+#   outline_sf = tanzania_1
+# )
+# 
+# p_mar
 
 # ggsave(filename = "figures/maps/mar_map.png",
 #        plot = p_mar,

@@ -100,72 +100,78 @@ apparent_intake <- function(name_of_survey, path_to_file = here::here("processed
 plot_map <- function(data, col, title, metric, outline_sf,
                      palette = "Zissou1", n = 100, limits = c(0, 100),
                      add_labels = FALSE) {
-
+  
   p <- ggplot() +
-    # fill the states by your chosen variable
-    geom_sf(data = data,
-            aes_string(fill = col),
-            color = "black",
-            size = 0.2) +
-    # add a single black outline
-    geom_sf(data = outline_sf,
-            fill = NA,
-            color = "black",
-            size = 0.5) +
-    # continuous palette
+    geom_sf(
+      data = data,
+      aes_string(fill = col),
+      color = "black",
+      size = 0.2
+    ) +
+    geom_sf(
+      data = outline_sf,
+      fill = NA,
+      color = "black",
+      size = 0.5
+    ) +
     scale_fill_gradientn(
       colours = wes_palette(palette, n = n, type = "continuous"),
       limits = limits,
-      name  = metric) +
+      name = metric
+    ) +
+    coord_sf(expand = FALSE) +
     labs(title = title) +
-    theme_minimal() +
+    theme_void() +
     theme(
-      plot.title       = element_text(hjust = 0.5, size = 16, face = "bold"),
-      plot.caption     = element_text(hjust = 0.5),
-      panel.grid       = element_blank(),
-      axis.title       = element_blank(),
-      axis.text        = element_blank(),
-      axis.ticks       = element_blank(),
-      legend.position  = "none",
-      legend.direction = "horizontal",
-      legend.title     = element_text(hjust = 0.5),
-      legend.key.width = unit(1.35, "cm"),
-      legend.key.height= unit(0.6, "cm")
+      plot.title = element_text(
+        hjust = 0.5,
+        size = 16,
+        face = "bold"
+      ),
+      plot.margin = margin(0, 0, 0, 0),
+      plot.background = element_rect(
+        fill = "transparent",
+        colour = NA
+      ),
+      panel.background = element_rect(
+        fill = "transparent",
+        colour = NA
+      ),
+      legend.position = "bottom"
     )
-
+  
   if (isTRUE(add_labels)) {
     
     if (!"adm2" %in% names(data)) {
       stop("When add_labels = TRUE, 'data' must contain a column named 'adm2'.")
     }
-
-    # Build labels: "Region Name\nXX%"; no rounding, use raw values + "%"
+    
     label_data <- data
-    nm   <- as.character(label_data[["adm2"]])
+    
+    nm <- as.character(label_data[["adm2"]])
     vals <- label_data[[col]]
-
-    # Keep rows with both a name and a value
+    
     ok <- !is.na(nm) & !is.na(vals)
     label_data <- label_data[ok, , drop = FALSE]
-    label_data$.__lab__ <- paste0(as.character(label_data[["adm2"]]),
-                                  "\n",
-                                  label_data[[col]], "%")
-
-    # # Prepare labels (use raw values + %)
-    # label_data <- data
-    # label_data$.__lab__ <- paste0(label_data[["adm2"]], "\n", label_data[[col]], "%")
-    # label_data <- label_data[!is.na(label_data$.__lab__), ]
-
-    p <- p + geom_sf_text(
-      data = label_data,
-      aes(label = .__lab__),
-      color = "white",
-      size = 4,
-      fontface = "bold",
-      check_overlap = TRUE
+    
+    label_data$.__lab__ <- paste0(
+      label_data[["adm2"]],
+      "\n",
+      label_data[[col]],
+      "%"
     )
+    
+    p <- p +
+      geom_sf_text(
+        data = label_data,
+        aes(label = .__lab__),
+        color = "white",
+        size = 4,
+        fontface = "bold",
+        check_overlap = TRUE
+      )
   }
-
+  
   p
 }
 

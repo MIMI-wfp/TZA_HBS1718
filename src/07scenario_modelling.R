@@ -444,10 +444,7 @@ for (i in micronutrients) {
   
   ggsave(
     filename = paste0(
-      "figures/fortification_maps/",
-      i,
-      "_map.png"
-    ),
+      "figures/fortification_maps/",i,"_map.png"),
     plot = p,
     width = 8,
     height = 6,
