@@ -255,7 +255,38 @@ fe_full_prob <- function(data, group1 = NULL, group2 = NULL, bio_avail = 10, hh_
   
   return(result)
 }
-
+# For MPA/I
+fe_full_prob_mpa <- function(data, bio_avail = 10) {
+  
+  data %>%
+    rename(intake = fe_mg) %>%
+    rowwise() %>%
+    mutate(
+      prob_inad = as.numeric(case_when(
+        
+        # -------- Iron bioavailability = 10% --------
+        bio_avail == 10 & intake <= 7.5  ~ 1,
+        bio_avail == 10 & intake <= 8.4  ~ 0.96,
+        bio_avail == 10 & intake <= 9.4  ~ 0.93,
+        bio_avail == 10 & intake <= 10.7 ~ 0.85,
+        bio_avail == 10 & intake <= 11.8 ~ 0.75,
+        bio_avail == 10 & intake <= 12.9 ~ 0.65,
+        bio_avail == 10 & intake <= 13.9 ~ 0.55,
+        bio_avail == 10 & intake <= 15.1 ~ 0.45,
+        bio_avail == 10 & intake <= 16.6 ~ 0.35,
+        bio_avail == 10 & intake <= 18.7 ~ 0.25,
+        bio_avail == 10 & intake <= 22.5 ~ 0.15,
+        bio_avail == 10 & intake <= 26.7 ~ 0.08,
+        bio_avail == 10 & intake <= 31.5 ~ 0.04,
+        bio_avail == 10 & intake >  31.5 ~ 0,
+        
+        TRUE ~ NA_real_
+      ))
+    ) %>%
+    ungroup() %>%
+    mutate(pa_fe = 1 - prob_inad) %>% 
+    select(hhid, pa_fe)
+}
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Fortification scenario
 fortification_scenario <- function(
