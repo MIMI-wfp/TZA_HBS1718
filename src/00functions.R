@@ -620,6 +620,7 @@ make_treemap <- function(df, title) {
     )
   ) +
     geom_treemap(
+      fill = "#2C7FB8",
       colour = "white",
       linewidth = 1
     ) +
