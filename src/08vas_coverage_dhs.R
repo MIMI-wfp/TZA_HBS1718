@@ -167,7 +167,7 @@ vas_cov
 
 # Save
 ggsave(
-  filename = "figures/fortification_maps/VAS_coverage.png",
+  filename = "figures/maps/VAS_coverage.png",
   plot = vas_cov,
   width = 8,
   height = 6,
@@ -201,7 +201,7 @@ vas_gava_map
 
 # Save
 ggsave(
-  filename = "figures/fortification_maps/VAS_GAVA.png",
+  filename = "figures/maps/VAS_GAVA.png",
   plot = vas_gava_map,
   width = 8,
   height = 6,
