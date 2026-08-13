@@ -1,5 +1,5 @@
 # Author: Uchenna Agu
-# Use: DHS Vitamin A Supplementation coverage (TZA 22)
+# Use: TDHS - MICS 22 Vitamin A Supplementation coverage
 # Date: July 2026
 # ==============================================================================
 # INSTALL AND LOAD REQUIRED PACKAGES
