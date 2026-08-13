@@ -579,4 +579,61 @@ contribution_table <- function(total, risk, not_risk, nutrient_label) {
       locations = cells_column_labels(everything())
     )
 }
+
+# =====================================================
+# Function to create treemap
+# =====================================================
+
+make_treemap <- function(df, title) {
   
+  # Sort descending
+  df <- df %>%
+    arrange(desc(contribution_pct))
+  
+  # Top 9 foods
+  top9 <- df %>%
+    slice_head(n = 9)
+  
+  # Remaining foods as Others
+  others <- df %>%
+    slice(-(1:min(9, n()))) %>%
+    summarise(contribution_pct = sum(contribution_pct, na.rm = TRUE)) %>%
+    mutate(item_name = "Others")
+  
+  # Combine
+  plot_df <- bind_rows(
+    top9 %>% select(item_name, contribution_pct),
+    others
+  ) %>%
+    mutate(
+      contribution_pct = round(contribution_pct),
+      label = paste0(item_name, "\n", contribution_pct, "%")
+    )
+  
+  # Treemap
+  ggplot(
+    plot_df,
+    aes(
+      area = contribution_pct,
+      fill = item_name,
+      label = label
+    )
+  ) +
+    geom_treemap(
+      colour = "white",
+      linewidth = 1
+    ) +
+    geom_treemap_text(
+      colour = "white",
+      place = "centre",
+      reflow = TRUE,
+      grow = FALSE,      # fixed text size
+      fontsize = 11,     # same size everywhere
+      fontface = "bold",
+      min.size = 0
+    ) +
+    theme_minimal() +
+    theme(
+      legend.position = "none"
+    )
+}

@@ -17,7 +17,8 @@ options(scipen = 99)
 rq_packages <- c(
   "tidyverse",
   "readr",
-  "gt"
+  "gt",
+  "treemapify"
 )
 
 # Install missing packages
@@ -202,3 +203,31 @@ gtsave(folate_contributions, "figures/food_item_contributions/folate.png")
 gtsave(b12_contributions, "figures/food_item_contributions/b12.png")
 gtsave(iron_contributions, "figures/food_item_contributions/iron.png")
 gtsave(zinc_contributions, "figures/food_item_contributions/zinc.png")
+
+#--------------------------------------------------
+# Create and save treemaps
+#--------------------------------------------------
+p_zinc   <- make_treemap(zinc_total,   "Zinc")
+p_iron   <- make_treemap(iron_total,   "Iron")
+p_folate <- make_treemap(folate_total, "Folate")
+p_b12    <- make_treemap(b12_total,    "Vitamin B12")
+p_vita   <- make_treemap(vitA_total,   "Vitamin A")
+
+plots <- list(
+  zinc_treemap     = p_zinc,
+  iron_treemap     = p_iron,
+  folate_treemap   = p_folate,
+  b12_treemap      = p_b12,
+  vitaminA_treemap = p_vita
+)
+
+for (nm in names(plots)) {
+  ggsave(
+    filename = paste0("figures/tree_maps/", nm, ".png"),
+    plot = plots[[nm]],
+    width = 8,
+    height = 6,
+    dpi = 300
+  )
+}
+
