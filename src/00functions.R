@@ -592,11 +592,11 @@ make_treemap <- function(df, title) {
   
   # Top 9 foods
   top9 <- df %>%
-    slice_head(n = 9)
+    slice_head(n = 20)
   
   # Remaining foods as Others
   others <- df %>%
-    slice(-(1:min(9, n()))) %>%
+    slice(-(1:min(20, n()))) %>%
     summarise(contribution_pct = sum(contribution_pct, na.rm = TRUE)) %>%
     mutate(item_name = "Others")
   

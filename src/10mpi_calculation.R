@@ -352,7 +352,7 @@ mpi_sep_res <- survey_design %>%
 # Mean MPI by Socioeconomic Position (Overall)
 #===============================================================================
 
-mpi_sep_total <- survey_design %>%
+mpi_sep_Overall <- survey_design %>%
   group_by(sep_quintile) %>%
   summarise(
     mean_mpi = survey_mean(
@@ -361,7 +361,7 @@ mpi_sep_total <- survey_design %>%
       vartype = NULL
     )
   ) %>%
-  mutate(res = "Total")
+  mutate(res = "Overall")
 
 
 #===============================================================================
@@ -369,7 +369,7 @@ mpi_sep_total <- survey_design %>%
 #===============================================================================
 
 mpi_sep_plot <- bind_rows(
-  mpi_sep_total,
+  mpi_sep_Overall,
   mpi_sep_res
 )
 
@@ -379,7 +379,7 @@ mpi_sep_plot <- bind_rows(
 #===============================================================================
 
 my_cols <- c(
-  Total = "black",
+  Overall = "black",
   Urban = "#2C7FB8",
   Rural = "#41AB5D"
 )
@@ -402,7 +402,7 @@ sep_quintile_line_plot <- ggplot(
   geom_point(size = 1.5) +
   scale_color_manual(
     values = my_cols,
-    breaks = c("Total", "Urban", "Rural")
+    breaks = c("Overall", "Urban", "Rural")
   ) +
   scale_x_continuous(
     breaks = 1:5,
