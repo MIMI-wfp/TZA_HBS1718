@@ -18,7 +18,8 @@ rq_packages <- c(
   "tidyverse",
   "readr",
   "gt",
-  "treemapify"
+  "treemapify",
+  "writexl"
 )
 
 # Install missing packages
@@ -231,3 +232,38 @@ for (nm in names(plots)) {
   )
 }
 
+# Process each dataframe
+process_df <- function(df) {
+  
+  top20 <- df %>%
+    select(item_name, contribution_pct) %>%
+    slice_head(n = 20)
+  
+  others <- df %>%
+    select(item_name, contribution_pct) %>%
+    slice(-(1:20)) %>%
+    summarise(
+      item_name = "Others",
+      contribution_pct = sum(contribution_pct, na.rm = TRUE)
+    )
+  
+  bind_rows(top20, others) %>%
+    mutate(contribution_pct = round(contribution_pct)) %>%
+    rename(
+      `Food Item` = item_name,
+      `Percentage contribution` = contribution_pct
+    )
+}
+
+excel_sheets <- list(
+  "Vitamin A"   = process_df(vitA_total),
+  "Folate"      = process_df(folate_total),
+  "Vitamin B12" = process_df(b12_total),
+  "Zinc"        = process_df(zinc_total),
+  "Iron"        = process_df(iron_total)
+)
+
+write_xlsx(
+  excel_sheets,
+  "csvs/Top20_Food_Contributors.xlsx"
+)
