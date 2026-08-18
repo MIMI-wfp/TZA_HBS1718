@@ -121,7 +121,8 @@ adm1_vas <- child_vas |>
 adm1_vas <- adm1_vas |>
   left_join(adm1_map, by = "adm1") |>
   mutate(adm1 = adm1_label,
-         adm1 = str_to_title(adm1)) |>
+         adm1 = str_to_title(adm1),
+         vas_coverage = round(vas_coverage)) |>
   select(adm1, vas_coverage) |>
   filter(!str_detect(adm1, "Unguja|Pemba|Mjini")) |>
   arrange(desc(vas_coverage))  
