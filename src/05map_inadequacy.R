@@ -95,7 +95,7 @@ mn_inadequacy <- analysis_df |>
 # Multiply by 100 and round to 1 decimal place:
 mn_inadequacy <- mn_inadequacy |> 
   mutate(across(-c(adm1, geometry), ~ .x * 100)) |> 
-  mutate(across(-c(adm1, geometry), ~ round(.x, digits = 1)))
+  mutate(across(-c(adm1, geometry), ~ round(.x, digits = 0)))
 
 tza_base_ai_fe <- base_ai |>
   left_join(hh_information, by = "hhid") |>
@@ -103,8 +103,14 @@ tza_base_ai_fe <- base_ai |>
 
 national_fe_inadequacy <- fe_full_prob(tza_base_ai_fe, bio_avail = 10, hh_weight = "survey_wgt") 
 
-tza_fe_inadequacy_adm1 <- fe_full_prob(tza_base_ai_fe, group1 = adm1, bio_avail = 10, hh_weight = "hh_weight") %>%
-  rename(fe_inadequacy=fe_mg_prop)
+tza_fe_inadequacy_adm1 <- fe_full_prob(
+  tza_base_ai_fe,
+  group1 = adm1,
+  bio_avail = 10,
+  hh_weight = "hh_weight"
+) %>%
+  rename(fe_inadequacy = fe_mg_prop) %>%
+  mutate(fe_inadequacy = round(fe_inadequacy, 0))
 
 mn_inadequacy <- mn_inadequacy |>
   left_join(tza_fe_inadequacy_adm1, by=c("adm1"="subpopulation"))
