@@ -247,7 +247,7 @@ analysis_df <- fortification_ai |>
   as_survey_design(weights = survey_wgt)
 
 # Weighted prevalence of inadequacy
-mn_inadequacy <- analysis_df |>
+mn_inadequacy_sc <- analysis_df |>
   group_by(adm1) |>
   summarise(
     vita_inadequacy =
@@ -273,9 +273,9 @@ mn_inadequacy <- analysis_df |>
   left_join(tanzania_1, by = "adm1")
 
 # Convert proportions to percentages
-mn_inadequacy <- mn_inadequacy |>
+mn_inadequacy_sc <- mn_inadequacy_sc |>
   mutate(across(-c(adm1, geometry), ~ .x * 100)) |>
-  mutate(across(-c(adm1, geometry), ~ round(.x, 1)))
+  mutate(across(-c(adm1, geometry), ~ round(.x, 0)))
 
 
 # ==============================================================================
@@ -302,9 +302,10 @@ tza_fe_inadequacy_adm1 <- fe_full_prob(
   bio_avail = 10,
   hh_weight = "hh_weight"
 ) %>%
-  rename(fe_inadequacy = fe_mg_prop)
+  rename(fe_inadequacy = fe_mg_prop) %>%
+  mutate(fe_inadequacy = round(fe_inadequacy, 0))
 
-mn_inadequacy <- mn_inadequacy |>
+mn_inadequacy_sc <- mn_inadequacy_sc |>
   left_join(
     tza_fe_inadequacy_adm1,
     by = c("adm1" = "subpopulation")
@@ -427,13 +428,13 @@ micronutrients <- c(
   "zn_inadequacy"
 )
 
-mn_inadequacy <- st_as_sf(mn_inadequacy)
+mn_inadequacy_sc <- st_as_sf(mn_inadequacy_sc)
 
 # Generate and save ADM1-level maps
 for (i in micronutrients) {
   
   p <- plot_map(
-    data = mn_inadequacy,
+    data = mn_inadequacy_sc,
     col = i,
     title = "",
     metric = "Risk of inadequate intake (%)",
