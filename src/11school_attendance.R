@@ -4,6 +4,9 @@
 # Date: August 2026
 # ============================================================
 
+#=============================================================
+######################## DATA CLEANING #######################
+#=============================================================
 
 # ------------------------------------------------------------
 # 1. Install and load the required packages
@@ -14,7 +17,13 @@ rq_packages <- c(
   "readr",
   "readxl",
   "tidyverse",
-  "haven"
+  "haven", 
+  "srvyr",
+  "gt",
+  "ggplot2",
+  "scales",
+  "sf",
+  "wesanderson"
 )
 
 # Check which required packages are already installed
@@ -285,7 +294,7 @@ hh_level <- household_roster |>
   )
 
 # Save
-write_csv(hh_level, file = "csvs/hh_level_school_status.csv")
+write_csv(hh_level, file = "processed_data/hh_level_school_status.csv")
 
 # Show count
 hh_level |>
@@ -296,3 +305,345 @@ hh_level |>
       2
     )
   )
+
+#=============================================================
+################ EXPLORATORY DATA ANALYSIS ###################
+#=============================================================
+
+#-------------------------------------------------------------
+# 1. Create analysis data-frame
+#-------------------------------------------------------------
+
+# Retain only required objects: 
+rm(list = setdiff(ls(), c("hh_level")))
+
+# Read in other required data-frames: 
+base_ai <- read_csv("processed_data/tza_hbs1718_base_ai.csv")
+hh_information <- read_csv("processed_data/tza_hbs1718_hh_information.csv")
+mpi <- read_csv("processed_data/tza_hbs1718_mpi.csv")
+
+# Create analysis dataframe with required variables: 
+analysis_df <- base_ai |> 
+  left_join(
+    hh_information |> dplyr::select(hhid, survey_wgt, adm1, res, sep_quintile), 
+    by = "hhid"
+  ) |>
+  left_join(
+    mpi |> dplyr::select(hhid, mpi), 
+    by = "hhid"
+  ) |>
+  left_join(
+    hh_level, 
+    by = "hhid"
+  ) |> 
+  rename(
+    school_attendance_status = hhid_status
+  ) |> 
+  # Label the school attendance status variable:
+  mutate(
+    school_attendance_status = factor(
+      school_attendance_status,
+      levels = c(1, 2, 3),
+      labels = c(
+        "No school-age children",
+        "School-age children, at least one attending",
+        "School-age children, none attending"
+      )
+    )
+  )
+
+#-------------------------------------------------------------
+# 2. Prepare svy analysis object with required variables
+#-------------------------------------------------------------
+
+# Get E-AR values required to binarise intake inadequacy: 
+source("src/00functions.R")
+
+rm(list = setdiff(ls(), c("analysis_df", "allen_ear", "fe_full_prob", "plot_map")))
+
+# BINARISE RISK OF INADEQUATE MICRONUTRIENT INTAKE:
+
+# Specify list of micronutrients: 
+micronutrients <- c("vita_rae_mcg", "folate_mcg",  "vitb12_mcg", "zn_mg")
+
+for (i in micronutrients) {
+  
+  ear_value <- allen_ear$ear_value[allen_ear$nutrient == i]
+  new_col <- paste0(i, "_inadequate")
+  analysis_df[[new_col]] <- ifelse(analysis_df[[i]] < ear_value, 1, 0)
+  
+}
+
+rm(ear_value, i, new_col)
+
+# Retain required columns: 
+analysis_df <- analysis_df |> 
+  dplyr::select(hhid, survey_wgt, adm1, res, sep_quintile, school_attendance_status,
+                vita_rae_mcg_inadequate, folate_mcg_inadequate, vitb12_mcg_inadequate,
+                zn_mg_inadequate, fe_mg, mpi)
+
+# # Create survey analysis object: 
+svy_analysis_df <- analysis_df |> 
+  as_survey_design(weights = survey_wgt)
+
+#-------------------------------------------------------------
+# 3. Compute school attendance by district, wealth quintile,
+# and urban/rural residence
+#-------------------------------------------------------------
+
+school_attendance <- svy_analysis_df |> 
+  group_by(adm1) |> 
+  summarise(
+    no_sac = survey_mean(
+      school_attendance_status == "No school-age children",
+      na.rm = TRUE,
+      vartype = NULL
+    ), 
+    sac_non_attendance = survey_mean(
+      school_attendance_status == "School-age children, none attending",
+      na.rm = TRUE,
+      vartype = NULL
+    ),
+    sac_attendance = survey_mean(
+      school_attendance_status == "School-age children, at least one attending",
+      na.rm = TRUE,
+      vartype = NULL
+    )
+  )
+
+school_attendance <- school_attendance |> 
+  mutate(across(-c(adm1), ~ .x * 100)) |> 
+  mutate(across(-c(adm1), ~ round(.x, digits = 1)))
+
+school_attendance_table <- school_attendance |> gt() |> 
+  cols_label(
+    adm1 = "District",
+    no_sac = "No school-age children",
+    sac_non_attendance = "School-age children, none attending",
+    sac_attendance = "School-age children, at least one attending"
+  ) |> 
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = cells_column_labels(everything())
+  ) |> 
+  tab_spanner(
+    label = "School Attendance Status, by district (% of households)",
+    columns = c(no_sac, sac_non_attendance, sac_attendance)
+  )
+
+# Save: 
+gtsave(
+  data = school_attendance_table,
+  filename = "figures/school_meals/school_attendance_by_district.png"
+)
+
+# Create alternative analysis data-frame that filters out households with no school-age children:
+sac_df <- analysis_df |> 
+  filter(school_attendance_status != "No school-age children")
+
+sac_df_svy <- sac_df |> 
+  as_survey_design(weights = survey_wgt)
+
+# Summarise school attendance by wealth quintile and urban/rural residence:
+school_attendance_disaggregated <- sac_df_svy |> 
+  group_by(sep_quintile, res) |> 
+  summarise(
+    sac_attendance = survey_mean(
+      school_attendance_status == "School-age children, at least one attending",
+      na.rm = TRUE,
+      vartype = NULL
+    )
+  )
+
+school_attendance_disaggregated <- school_attendance_disaggregated |> 
+    mutate(
+    sep_quintile = factor(
+      sep_quintile,
+      levels = 1:5,
+      labels = c("Q1\n(poorest)", "Q2", "Q3", "Q4", "Q5\n(wealthiest)")
+    ),
+    res = factor(res, levels = c("Rural", "Urban"))
+  )
+
+p <- ggplot(school_attendance_disaggregated, aes(x = sep_quintile, y = sac_attendance,
+                     colour = res, linetype = res, group = res)) +
+  geom_line(linewidth = 0.9) +
+  geom_point(size = 2.6) +
+  scale_colour_manual(values = c("Rural" = "#2A78D6", "Urban" = "#5e5e5e")) +
+  scale_linetype_manual(values = c("Rural" = "solid", "Urban" = "dashed")) +
+  scale_y_continuous(
+    labels = label_percent(accuracy = 1),
+    limits = c(0.78, 0.96),
+    breaks = seq(0.78, 0.96, by = 0.02),
+    expand = expansion(mult = c(0.02, 0.02))
+  ) +
+  labs(
+    x = "Socio-economic quintile",
+    y = "% of households with school aged children, \nwith at least one child attending school",
+    colour = "Residence",
+    linetype = "Residence",
+    title = ""
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    legend.position = "top",
+    legend.title = element_blank(),
+    plot.title = element_text(face = "plain", size = 12, hjust = 0),
+    axis.title = element_text(size = 11)
+  )
+ 
+print(p)
+
+ggsave(
+  filename = "figures/school_meals/school_attendance_disaggregated_plot.png",
+  plot = p,
+  width = 8,
+  height = 6,
+  dpi = 300
+)
+
+# Map school attendance by district:
+# SHAPEFILES: 
+tanzania_1 <- st_read("shapefiles/tza_admbnda_adm1_20181019.shp") |> 
+  dplyr::select(
+    adm1 = ADM1_EN, 
+    geometry
+  ) |> 
+  filter(!str_detect(adm1, "Unguja|Pemba|Mjini")) |>
+  mutate(adm1 = recode(
+    adm1, 
+    "Dar-es-salaam" = "Dar Es Salaam",
+  ))
+
+school_attendance_district <- sac_df_svy |> 
+  group_by(adm1) |> 
+  summarise(
+    sac_attendance = survey_mean(
+      school_attendance_status == "School-age children, at least one attending",
+      na.rm = TRUE,
+      vartype = NULL
+    )
+  ) |> 
+  mutate(sac_attendance = round(sac_attendance * 100, digits = 1)) |> 
+  left_join(tanzania_1, by = "adm1") |> 
+  st_as_sf()
+
+district_map <- ggplot() +
+    geom_sf(
+      data = school_attendance_district,
+      aes_string(fill = "sac_attendance"),
+      color = "black",
+      size = 0.2
+    ) +
+    # geom_sf(
+    #   data = tanzania_1,
+    #   fill = NA,
+    #   color = "black",
+    #   size = 0.5
+    # ) +
+    scale_fill_gradientn(
+      colours = RColorBrewer::brewer.pal(9, "Blues"),
+      limits = c(75, 100),
+      name = "Households with school-age children\n with at least one attending school (%)"
+    ) +
+    coord_sf(expand = FALSE) +
+    labs(title = "") +
+    theme_void() +
+    theme(
+      plot.title = element_text(
+        hjust = 0.5,
+        size = 16,
+        face = "bold"
+      ),
+      plot.margin = margin(0, 0, 0, 0),
+      plot.background = element_rect(
+        fill = "transparent",
+        colour = NA
+      ),
+      panel.background = element_rect(
+        fill = "transparent",
+        colour = NA
+      ),
+      legend.position = "bottom"
+    )
+
+district_map
+
+ggsave(
+  filename = "figures/school_meals/school_attendance__map.png",
+  plot = district_map,
+  width = 8,
+  height = 6,
+  dpi = 300
+)
+
+#-------------------------------------------------------------
+# 4. Compute risk of inadequacy for each group
+#-------------------------------------------------------------
+
+# Compute risk of inadequate intake for each MN & MPI (grouped by school attendance status): 
+mn_inadequacy <- svy_analysis_df |> 
+  group_by(school_attendance_status) |> 
+  summarise(vita_inadequacy = survey_mean(vita_rae_mcg_inadequate, na.rm = T, vartype = NULL),
+            folate_inadequacy = survey_mean(folate_mcg_inadequate, na.rm = T, vartype = NULL),
+            vitb12_inadequacy = survey_mean(vitb12_mcg_inadequate, na.rm = T, vartype = NULL),
+            zn_inadequacy = survey_mean(zn_mg_inadequate, na.rm = T, vartype = NULL),
+            mpi = survey_mean(mpi, na.rm = T, vartype = NULL))
+
+mn_inadequacy <- mn_inadequacy |> 
+  mutate(across(-c(school_attendance_status), ~ .x * 100)) |> 
+  mutate(across(-c(school_attendance_status), ~ round(.x, digits = 1)))
+
+# Probability of inadequate intake for Fe:
+fe_inadequacy <- fe_full_prob(
+  data = analysis_df,
+  group1 = school_attendance_status,
+  bio_avail = 10, 
+  hh_weight = "survey_wgt"
+) |> 
+  rename(
+    school_attendance_status = subpopulation,
+    fe_inadequacy = fe_mg_prop
+  ) |> 
+  mutate(
+    fe_inadequacy = round(fe_inadequacy, digits = 1)
+  )
+
+# Join: 
+mn_inadequacy <- mn_inadequacy |> 
+  left_join(fe_inadequacy, by = c("school_attendance_status")) |> 
+  dplyr::select(school_attendance_status, vita_inadequacy, folate_inadequacy, vitb12_inadequacy,
+                zn_inadequacy, fe_inadequacy, mpi)
+
+# GT table: 
+mn_inadequacy_table <- mn_inadequacy |> 
+  gt() |> 
+  cols_label(
+    school_attendance_status = "School attendance status",
+    vita_inadequacy = "Vitamin A",
+    folate_inadequacy = "Folate",
+    vitb12_inadequacy = "Vitamin B12",
+    zn_inadequacy = "Zinc",
+    fe_inadequacy = "Iron",
+    mpi = "MPI"
+  ) |>
+  tab_spanner(
+    label = "Risk of inadequate intake, by school attendance status (% of households)",
+    columns = c(vita_inadequacy, folate_inadequacy, vitb12_inadequacy, zn_inadequacy, fe_inadequacy, mpi)
+  ) |> 
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = cells_column_labels(everything())
+  )
+
+gtsave(
+  data = mn_inadequacy_table,
+  filename = "figures/school_meals/mn_inadequacy_by_school_attendance.png"
+)
+
