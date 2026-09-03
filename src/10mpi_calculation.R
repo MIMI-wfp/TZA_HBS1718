@@ -173,6 +173,9 @@ mpa_result <- base_ai %>%
 mpi_result <- mpa_result %>%
   mutate(mpi = 1 - mpa)
 
+# Write CSV for use in other analyses: 
+write_csv(mpi_result, "processed_data/tza_hbs1718_mpi.csv")
+
 
 #===============================================================================
 # Household Characteristics
