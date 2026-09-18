@@ -947,4 +947,3 @@ gtsave(
   filename = "figures/school_meals/mn_inadequacy_by_school_attendance.png"
 )
 
->>>>>>> 60c924e6ba9cd0d558a3c527d1a2a54988bad3d9
