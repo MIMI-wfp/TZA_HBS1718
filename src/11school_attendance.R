@@ -357,7 +357,7 @@ analysis_df <- base_ai |>
 #-------------------------------------------------------------
 
 # Get E-AR values required to binarise intake inadequacy: 
-source("src/00functions.R")
+source("src/00functions_ed.R")
 
 rm(list = setdiff(ls(), c("analysis_df", "allen_ear", "fe_full_prob", "plot_map")))
 
