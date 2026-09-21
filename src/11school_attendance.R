@@ -1,5 +1,5 @@
 # ============================================================
-# TANZANIA HBS 2017-18: SCHOOL-ATTENDANCE DATA FOR CHILDREN AGED 7-18
+# TANZANIA HBS 2017-13: SCHOOL-ATTENDANCE DATA FOR CHILDREN AGED 7-13
 # Authors: UA & MO
 # Date: August 2026
 # ============================================================
@@ -88,20 +88,20 @@ household_roster <- household_roster |>
   mutate(
     
     # Assign 2 to in_school for household members outside
-    # the selected school-age range of 7-18 years.
-    # For people aged 7-18, retain their original S5_4 value,
+    # the selected school-age range of 7-13 years.
+    # For people aged 7-13, retain their original S5_4 value,
     # including missing values.
     in_school = if_else(
-      age < 7 | age > 18,
+      age < 7 | age > 13,
       2,
       as.numeric(in_school)
     ),
     
     # Create an indicator for school-aged children:
-    # 1 = aged 7-18
-    # 0 = younger than 7 or older than 18
-    school_age_7_18 = if_else(
-      age >= 7 & age <= 18,
+    # 1 = aged 7-13
+    # 0 = younger than 7 or older than 13
+    school_age_7_13 = if_else(
+      age >= 7 & age <= 13,
       1L,
       0L
     )
@@ -125,7 +125,7 @@ colSums(
 
 missing_attendance_records <- household_roster |>
   filter(
-    school_age_7_18 == 1,
+    school_age_7_13 == 1,
     is.na(in_school)
   )
 
@@ -208,7 +208,7 @@ household_roster <- household_roster |>
   select(
     hhid,
     age,
-    school_age_7_18,
+    school_age_7_13,
     in_school
   )
 
@@ -242,10 +242,10 @@ colSums(is.na(household_roster))
 # Display the dimensions of the final individual-level dataset
 dim(household_roster)
 
-# Check attendance status among children aged 7-18
+# Check attendance status among children aged 7-13
 household_roster |>
   filter(
-    school_age_7_18 == 1
+    school_age_7_13 == 1
   ) |>
   count(
     in_school,
@@ -262,15 +262,15 @@ household_roster |>
 hh_level <- household_roster |>
   group_by(hhid) |>
   summarise(
-    # Number of household members aged 7-18
+    # Number of household members aged 7-13
     number_school_age = sum(
-      school_age_7_18 == 1,
+      school_age_7_13 == 1,
       na.rm = TRUE
     ),
     
     # Number of school-aged children attending school
     number_attending = sum(
-      school_age_7_18 == 1 & in_school == 1,
+      school_age_7_13 == 1 & in_school == 1,
       na.rm = TRUE
     ),
     
@@ -318,9 +318,9 @@ hh_level |>
 rm(list = setdiff(ls(), c("hh_level")))
 
 # Read in other required data-frames: 
-base_ai <- read_csv("processed_data/tza_hbs1718_base_ai.csv")
-hh_information <- read_csv("processed_data/tza_hbs1718_hh_information.csv")
-mpi <- read_csv("processed_data/tza_hbs1718_mpi.csv")
+base_ai <- read_csv("processed_data/tza_hbs1713_base_ai.csv")
+hh_information <- read_csv("processed_data/tza_hbs1713_hh_information.csv")
+mpi <- read_csv("processed_data/tza_hbs1713_mpi.csv")
 
 # Create analysis dataframe with required variables: 
 analysis_df <- base_ai |> 
@@ -508,7 +508,7 @@ ggsave(
 
 # Map school attendance by district:
 # SHAPEFILES: 
-tanzania_1 <- st_read("shapefiles/tza_admbnda_adm1_20181019.shp") |> 
+tanzania_1 <- st_read("shapefiles/tza_admbnda_adm1_20131019.shp") |> 
   dplyr::select(
     adm1 = ADM1_EN, 
     geometry
