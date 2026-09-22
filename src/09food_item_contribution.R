@@ -38,7 +38,7 @@ rm(list = c("rq_packages", "installed_packages"))
 base_ai <- read_csv("processed_data/tza_hbs1718_base_ai.csv")
 
 # Load EAR values and utility functions
-source("src/00functions.R")
+source("src/00functions_ed.R")
 
 # Micronutrients to assess
 micronutrients <- c(
