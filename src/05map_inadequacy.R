@@ -43,7 +43,7 @@ tanzania_1 <- st_read("shapefiles/tza_admbnda_adm1_20181019.shp") |>
 #-------------------------------------------------------------------------------
 
 # GET EAR VALUES: 
-source("src/00functions.R")
+source("src/00functions_ed.R")
 
 rm(list = setdiff(ls(), c("base_ai", "hh_information", "allen_ear", "tanzania_1",
                          "fe_full_prob", "plot_map")))
