@@ -43,7 +43,7 @@ tanzania_1 <- st_read("shapefiles/tza_admbnda_adm1_20181019.shp") |>
 #-------------------------------------------------------------------------------
 
 # GET EAR VALUES: 
-source("src/00functions.R")
+source("src/00functions_ed.R")
 
 rm(list = setdiff(ls(), c("base_ai", "hh_information", "allen_ear", "tanzania_1",
                          "fe_full_prob", "plot_map")))
@@ -147,10 +147,10 @@ mar_inadequacy <- mar_analysis_df |>
   summarise(mar = survey_mean(mar_inadequate, na.rm = T, vartype = NULL)) |> 
   left_join(tanzania_1, by = "adm1")
 
-# Multiply by 100 and round to 1 decimal place:
+# Multiply by 100 and round to 0 decimal place:
 mar_inadequacy <- mar_inadequacy |> 
   mutate(mar = mar * 100) |> 
-  mutate(mar = round(mar, digits = 1))
+  mutate(mar = round(mar, digits = 0))
 
 #-------------------------------------------------------------------------------
 
