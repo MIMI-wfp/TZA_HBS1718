@@ -433,6 +433,8 @@ school_attendance_table <- school_attendance |> gt() |>
     columns = c(no_sac, sac_non_attendance, sac_attendance)
   )
 
+school_attendance_table
+
 # Save: 
 gtsave(
   data = school_attendance_table,
@@ -472,11 +474,11 @@ p <- ggplot(school_attendance_disaggregated, aes(x = sep_quintile, y = sac_atten
   geom_line(linewidth = 0.9) +
   geom_point(size = 2.6) +
   scale_colour_manual(values = c("Rural" = "#2A78D6", "Urban" = "#5e5e5e")) +
-  scale_linetype_manual(values = c("Rural" = "solid", "Urban" = "dashed")) +
+  scale_linetype_manual(values = c("Rural" = "solid", "Urban" = "solid")) +
   scale_y_continuous(
     labels = label_percent(accuracy = 1),
-    limits = c(0.78, 0.96),
-    breaks = seq(0.78, 0.96, by = 0.02),
+    limits = c(0.78, 1),
+    breaks = seq(0.78, 1, by = 0.02),
     expand = expansion(mult = c(0.02, 0.02))
   ) +
   labs(
@@ -641,6 +643,8 @@ mn_inadequacy_table <- mn_inadequacy |>
     ),
     locations = cells_column_labels(everything())
   )
+
+mn_inadequacy_table
 
 gtsave(
   data = mn_inadequacy_table,
