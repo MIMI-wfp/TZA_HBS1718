@@ -82,7 +82,7 @@ national_mn_inadequacy <- analysis_df |>
             vitb12_inadequacy = survey_mean(vitb12_mcg_inadequate, na.rm = T, vartype = NULL),
             zn_inadequacy = survey_mean(zn_mg_inadequate, na.rm = T, vartype = NULL)) |> 
   mutate(across(everything(), ~ .x * 100)) |> 
-  mutate(across(everything(), ~ round(.x, digits = 1)))
+  mutate(across(everything(), ~ round(.x, digits = 0)))
 
 mn_inadequacy <- analysis_df |> 
   group_by(adm1) |> 
