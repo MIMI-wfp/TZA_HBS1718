@@ -510,7 +510,7 @@ ggsave(
 
 # Map school attendance by district:
 # SHAPEFILES: 
-tanzania_1 <- st_read("shapefiles/tza_admbnda_adm1_20131019.shp") |> 
+tanzania_1 <- st_read("shapefiles/tza_admbnda_adm1_20181019.shp") |> 
   dplyr::select(
     adm1 = ADM1_EN, 
     geometry

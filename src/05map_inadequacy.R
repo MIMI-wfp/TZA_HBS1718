@@ -82,7 +82,7 @@ national_mn_inadequacy <- analysis_df |>
             vitb12_inadequacy = survey_mean(vitb12_mcg_inadequate, na.rm = T, vartype = NULL),
             zn_inadequacy = survey_mean(zn_mg_inadequate, na.rm = T, vartype = NULL)) |> 
   mutate(across(everything(), ~ .x * 100)) |> 
-  mutate(across(everything(), ~ round(.x, digits = 1)))
+  mutate(across(everything(), ~ round(.x, digits = 0)))
 
 mn_inadequacy <- analysis_df |> 
   group_by(adm1) |> 
@@ -147,10 +147,10 @@ mar_inadequacy <- mar_analysis_df |>
   summarise(mar = survey_mean(mar_inadequate, na.rm = T, vartype = NULL)) |> 
   left_join(tanzania_1, by = "adm1")
 
-# Multiply by 100 and round to 1 decimal place:
+# Multiply by 100 and round to 0 decimal place:
 mar_inadequacy <- mar_inadequacy |> 
   mutate(mar = mar * 100) |> 
-  mutate(mar = round(mar, digits = 1))
+  mutate(mar = round(mar, digits = 0))
 
 #-------------------------------------------------------------------------------
 

@@ -137,7 +137,7 @@ plot_map <- function(data, col, title, metric, outline_sf,
         fill = "transparent",
         colour = NA
       ),
-      legend.position = "bottom"
+      legend.position = "none"
     )
   
   if (isTRUE(add_labels)) {
