@@ -148,7 +148,7 @@ tanzania_1 <- st_read("shapefiles/tza_admbnda_adm1_20181019.shp") |>
 tza_vas_coverage <- tanzania_1 |>
   left_join(adm1_vas, by = "adm1")
 
-source("src/00functions.R")
+source("src/00functions_ed.R")
 
 vas_cov <- plot_map(
   data = tza_vas_coverage,
