@@ -23,37 +23,19 @@ rq_packages <- c(
   "ggplot2",
   "scales",
   "sf",
-  "wesanderson"
+  "wesanderson",
+  "RColorBrewer", 
+  "dplyr"
 )
 
-# Check which required packages are already installed
-installed_packages <- rq_packages %in%
-  rownames(installed.packages())
-
-# Install only packages that are not currently installed
+installed_packages <- rq_packages %in% rownames(installed.packages())
 if (any(installed_packages == FALSE)) {
-  install.packages(
-    rq_packages[!installed_packages]
-  )
+  install.packages(rq_packages[!installed_packages])
 }
 
-# Load all required packages
-# invisible() prevents lapply() from printing its output
-invisible(
-  lapply(
-    rq_packages,
-    require,
-    character.only = TRUE
-  )
-)
+lapply(rq_packages, require, character.only = T)
 
-# Remove temporary package-management objects
-rm(
-  list = c(
-    "rq_packages",
-    "installed_packages"
-  )
-)
+rm(list= c("rq_packages", "installed_packages"))
 
 # ------------------------------------------------------------
 # 2. Import the Tanzania HBS individual-level dataset
@@ -177,6 +159,19 @@ S5_2_summary <- missing_attendance_records |>
 # Display the S5_2 frequency table
 S5_2_summary
 
+# Re-classify children aged 7 who rerported being "Too Young" as non-school-aged:
+# (This is because the child is likely to have been younger than the official age
+# of entry at the start of the school year, and has since turned 7)
+
+household_roster <- household_roster |>
+  mutate(
+    school_age_7_13 = if_else(
+      age == 7 & S5_2 == 1,
+      0L,
+      school_age_7_13
+    )
+  )
+
 # ------------------------------------------------------------
 # 8. Recover non-attendance information using S5_2
 # ------------------------------------------------------------
@@ -199,6 +194,7 @@ household_roster <- household_roster |>
       in_school
     )
   )
+
 
 # ------------------------------------------------------------
 # 9. Retain the final variables required for household analysis
