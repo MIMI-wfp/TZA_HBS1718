@@ -423,7 +423,7 @@ sep_quintile_line_plot <- ggplot(
   ) +
   labs(
     x = "Socioeconomic Position",
-    y = "Mean MPI",
+    y = "Mean Probability of Inadequacy",
     colour = NULL
   ) +
   theme_classic(base_size = 14) +

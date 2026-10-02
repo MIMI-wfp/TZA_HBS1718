@@ -148,23 +148,45 @@ tanzania_1 <- st_read("shapefiles/tza_admbnda_adm1_20181019.shp") |>
 tza_vas_coverage <- tanzania_1 |>
   left_join(adm1_vas, by = "adm1")
 
-source("src/00functions.R")
-
-vas_cov <- plot_map(
-  data = tza_vas_coverage,
-  col = "vas_coverage",
-  title = "",
-  metric = "Coverage (%)",
-  outline_sf = tanzania_1,
-  limits = c(0, 100)
-) +
-  scale_fill_gradientn(
-    colours = rev(wes_palette("Zissou1", n = 100, type = "continuous")),
+vas_cov <- ggplot(tza_vas_coverage) +
+  geom_sf(aes(fill = vas_coverage), colour = NA) +
+  geom_sf(
+    data = tanzania_1,
+    fill = NA,
+    colour = "grey30",
+    linewidth = 0.2
+  ) +
+  geom_sf_text(
+    data = tanzania_1,
+    aes(label = adm1),
+    size = 3,
+    colour = "black",
+    fontface = "bold"
+  ) +
+  scale_fill_distiller(
+    palette = "RdYlGn",
+    direction = 1,
     limits = c(0, 100),
-    name = "Coverage (%)"
+    name = "Coverage (%)",
+    guide = guide_colorbar(
+      direction = "horizontal",
+      barwidth = unit(10, "cm"),
+      barheight = unit(0.5, "cm")
+    )
+  ) +
+  labs(title = NULL) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold"),
+    legend.key.width = unit(1.5, "cm")
   )
 
 vas_cov
+
 
 # Save
 ggsave(
